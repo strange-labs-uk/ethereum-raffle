@@ -1,0 +1,17 @@
+{
+  "name": "lottery",
+  "version": "1.0.0",
+  "description": "Lottery DApp using ERC-20 compliant Lottery Token",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bharat Kunwar",
+  "license": "MIT",
+  "dependencies": {
+    "zeppelin-solidity": "^1.5.0"
+  },
+  "directories": {
+    "test": "test"
+  }
+}
