@@ -14,7 +14,11 @@ require('chai')
 const Lottery = artifacts.require('Lottery');
 const LotteryToken = artifacts.require('LotteryToken');
 
-contract('Lottery', function ([owner, wallet, investor]) {
+contract('Lottery', function (accounts) {
+  const owner = accounts[0];
+  const wallet = accounts[1];
+  const investor = accounts[2];
+
   const RATE = new BigNumber(10);
   const GOAL = ether(10);
   const CAP = ether(20);

@@ -13,10 +13,16 @@ To deploy the `Lottery` DApp on a truffle server, do the following:
 In the `truffle(develop)>` console:
 
 	deploy --reset
-	test
 
-Now you can interact with the lottery contract, you can create a pointer to it as follows:
+Now you can interact with the lottery contract. Lets send an ether to the lottery DApp to buy lottery tokens.
+	
+	lot = Lottery.deployed()
+	lot.then(function(instance){return instance.send(10);})
+	lot.then(instance=>instance.weiRaised())
 
-	var lot = Lottery.at(Lottery.address)
+Check your `LTK` balance:
 
-However, I have not figure out how to interact with it beyond this yet so if anyone can figure it out, please share your wisdom.
+	ltk = lot.token().then(address=>LotteryToken.at(address))
+	ltk.then(instance=>instance.balanceOf(web3.eth.coinbase))
+
+By far the easiest thing seems to be to put all of this into `test/Lottery.test.js` and run `test` inside `truffle(develop)>` console.
