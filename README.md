@@ -30,7 +30,7 @@ By far the easiest thing seems to be to put all of this into `test/Lottery.test.
 
 ## Front-end
 
-There is a simple front-end in /frontend. To use it, do the following:
+There is a simple front-end in ./frontend. To use it, do the following:
 
     cd frontend
     npm install
