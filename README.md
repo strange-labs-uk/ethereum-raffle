@@ -35,6 +35,23 @@ There is a simple front-end in ./frontend. To use it, do the following:
     cd frontend
     npm install
     npm start
-    Then browse to hhttp://localhost:3000
+    Then browse to http://localhost:3000
     
 Note: This has not yet been intergrated with the smart contracts.
+
+Front End can now call functions from the deployed contract (follow above instructions to serve the Front End)
+    
+Open another terminal:
+    
+    truffle develop
+    migrate --reset
+    
+Copy deployed address of "Lottery: ....":
+
+    cd frontend/public/js/lottery.js
+    paste address to var contract_address
+  
+Refresh page at http://localhost:3000
+    
+    Front End should display the goal of the Fund Raise == 10000
+	
