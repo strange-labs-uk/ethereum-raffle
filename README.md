@@ -26,3 +26,15 @@ Check your `LTK` balance:
 	ltk.then(instance=>instance.balanceOf(web3.eth.coinbase))
 
 By far the easiest thing seems to be to put all of this into `test/Lottery.test.js` and run `test` inside `truffle(develop)>` console.
+
+
+## Front-end
+
+There is a simple front-end in /frontend. To use it, do the following:
+
+    cd frontend
+    npm install
+    npm start
+    Then browse to hhttp://localhost:3000
+    
+Note: This has not yet been intergrated with the smart contracts.
