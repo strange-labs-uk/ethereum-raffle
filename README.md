@@ -21,7 +21,8 @@ Now you can interact with the lottery contract. Lets send an ether to the lotter
 	lot.then(instance=>instance.weiRaised())
 
 Check your `LTK` balance:
-
+	
+	lot = Lottery.at(Lottery.address)
 	ltk = lot.token().then(address=>LotteryToken.at(address))
 	ltk.then(instance=>instance.balanceOf(web3.eth.coinbase))
 
