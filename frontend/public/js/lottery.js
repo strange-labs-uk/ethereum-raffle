@@ -65,13 +65,14 @@ $(function() {
             if (error) {
                 console.log(error);
             }
+            else {
+                var account = accounts[0];
+                var numTokens = parseInt($("#num-tickets").val());
 
-            var account = accounts[0];
-            var numTokens = parseInt($("#num-tickets").val());
-            
-            contract.buyTokens.sendTransaction(account, { from: account, value: numTokens * 1000 })
-            
-            //web3.eth.sendTransaction({to:contract_address, from:account, value: 1000});
+                contract.buyTokens.sendTransaction(account, { from: account, value: numTokens * 1000 })
+
+                //web3.eth.sendTransaction({to:contract_address, from:account, value: numTokens * 1000});
+            }
         });
     });
 })
