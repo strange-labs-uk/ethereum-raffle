@@ -31,6 +31,10 @@ contract LotteryToken is MintableToken {
  */
 contract Lottery is CappedCrowdsale, RefundableCrowdsale {
 
+  address[] public investorAddresses;
+  uint256 public numInvestors; 
+  event tallyTokens(uint256 numTokens, uint256 tokens);
+
   function Lottery(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _goal, uint256 _cap, address _wallet) public
     CappedCrowdsale(_cap)
     FinalizableCrowdsale()
@@ -40,6 +44,36 @@ contract Lottery is CappedCrowdsale, RefundableCrowdsale {
     //As goal needs to be met for a successful crowdsale
     //the value needs to less or equal than a cap which is limit for accepted funds
     require(_goal <= _cap);
+  }
+
+  function registerAddress(uint256 tokens) {
+    for (uint i = 0; i < tokens; tokens ++)
+    {
+      investorAddresses.push(msg.sender);    
+    }
+    numInvestors = investorAddresses.length;
+    tallyTokens(numInvestors, tokens);
+  }  
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != address(0));
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+
+    // calculate token amount to be created
+    uint256 tokens = weiAmount.mul(rate);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    token.mint(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+    registerAddress(tokens);
+
+    forwardFunds();
   }
 
   function createTokenContract() internal returns (MintableToken) {

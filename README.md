@@ -17,13 +17,23 @@ In the `truffle(develop)>` console:
 Now you can interact with the lottery contract. Lets send an ether to the lottery DApp to buy lottery tokens.
 	
 	lot = Lottery.deployed()
-	lot.then(function(instance){return instance.send(10);})
+	lot.then(function(instance){return instance.send(1);})
 	lot.then(instance=>instance.weiRaised())
+
+Check the number of tickets associated with investor addresses:
+
+	lot.then(function(instance){return instance.send(1).then(i=>i.logs[1].args['numTokens']);})
+
 
 Check your `LTK` balance:
 
 	ltk = lot.token().then(address=>LotteryToken.at(address))
 	ltk.then(instance=>instance.balanceOf(web3.eth.coinbase))
+
+Check the vault:
+	
+	vlt = lot.vault().then(address=>RefundVault.at(address))
+	vlt.then(instance=>instance.investors())
 
 By far the easiest thing seems to be to put all of this into `test/Lottery.test.js` and run `test` inside `truffle(develop)>` console.
 
