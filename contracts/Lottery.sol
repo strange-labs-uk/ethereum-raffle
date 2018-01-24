@@ -53,7 +53,11 @@ contract Lottery is CappedCrowdsale, RefundableCrowdsale {
     }
     numInvestors = investorAddresses.length;
     tallyTokens(numInvestors, tokens);
-  }  
+  }
+
+  function sendVal() public payable {
+    buyTokens(msg.sender);
+  }
 
   // low level token purchase function
   function buyTokens(address beneficiary) public payable {
@@ -71,7 +75,7 @@ contract Lottery is CappedCrowdsale, RefundableCrowdsale {
     token.mint(beneficiary, tokens);
     TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
 
-    registerAddress(tokens);
+    // registerAddress(tokens);
 
     forwardFunds();
   }

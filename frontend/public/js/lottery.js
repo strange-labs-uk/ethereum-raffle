@@ -39,7 +39,21 @@ function retrieveDeployedContract() {
     contract = web3.eth.contract(contract_abidefinition).at(contract_address);
 
     getTokenGoal();
+    getWeiRaised();
 
+}
+
+function getWeiRaised() {
+    console.log("Getting message from contract");
+    contract.weiRaised.call(function(error, result) {
+        if (error) {
+            console.log("There was an error");
+            updateUI('wei_raised', "There was an error", true);
+        } else {
+            updateUI('wei_raised', result, false);
+            console.log("Updated UI message successfully"); 
+        }
+    });
 }
 
 function getTokenGoal() {
@@ -70,8 +84,10 @@ $(function() {
                 var account = accounts[0];
                 var numTokens = parseInt($("#num-tickets").val());
 
-                contract.buyTokens.sendTransaction(account, { from: account, value: numTokens * 1000 })
-
+                contract.sendVal({ from: account, value: numTokens * 1000 });
+                console.log('Bought requested tokens');
+                getWeiRaised();
+                
                 //web3.eth.sendTransaction({to:contract_address, from:account, value: numTokens * 1000});
             }
         });
