@@ -5,31 +5,52 @@
 </div>
 <form>
     <div class="row">
-        <div class="offset-sm-5 col-sm-2 text-center">
+        <div class="offset-sm-4 col-sm-4 text-center">
             <label class="col-form-label" for="supplyRatio">Number of tickets</label>
         </div>
     </div>
-    <div class="form-group row">
-        <div class="offset-sm-5 col-sm-2">
-            <input class="form-control text-center" id="num-tickets" value="1" />                               
+    <div class="row">
+        <div class="col-sm-6 text-center">
+            <label class="col-form-label">Starting</label>
+            <div><h3 id="start_time">--</h3></div>
+        </div>
+        <div class="col-sm-6 text-center">
+            <label class="col-form-label">Ending</label>
+            <div><h3 id="end_time">--</h3></div>
         </div>
     </div>
     <div class="form-group row">
-        <div class="offset-sm-5 col-sm-2 text-center">
+        <div class="offset-sm-5 col-sm-2 offset-sm-5">
+            <input class="form-control text-center" id="num-tickets" value="1" />                               
+        </div>
+    </div>
+    <div class="row">
+        <div class="offset-sm-4 col-sm-4 text-center">
+            <label class="col-form-label">Cost in Wei</label>
+            <div><h3 id="wei_cost">--</h3></div>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="offset-sm-4 col-sm-4 text-center">
             <input type="button" value="Buy" class="btn-primary" id="btn-buy"/>
         </div>
     </div>
     <div class="row">
-        <div class="offset-sm-5 col-sm-2 text-center">
-            <label class="col-form-label">Wei Raised:</label>
+        <div class="offset-sm-4 col-sm-4 text-center">
+            <label class="col-form-label">Raised Wei</label>
             <div><h3 id="wei_raised">--</h3></div>
         </div>
     </div>
     <div class="row">
-        <div class="offset-sm-5 col-sm-2 text-center">
-            <label class="col-form-label">Current Goal:</label>
-            <div><h3 id="token_goal">--</h3></div>
+        <div class="offset-sm-4 col-sm-4 text-center">
+            <label class="col-form-label">Goal in Wei</label>
+            <div><h3 id="wei_goal">--</h3></div>
         </div>
     </div>
-
+    <div class="row">
+        <div class="offset-sm-4 col-sm-4 text-center">
+            <label class="col-form-label">Cap in Wei</label>
+            <div><h3 id="wei_cap">--</h3></div>
+        </div>
+    </div>
 </form>

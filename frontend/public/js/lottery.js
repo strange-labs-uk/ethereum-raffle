@@ -4,8 +4,9 @@
  * Instance variables needed to interact with deployed contract
  */
 var contract_abidefinition = ""
-var contract_address = "0x345ca3e014aaf5dca488057592ee47305d9b3e10"
+var contract_address = "0x9fbda871d559710256a2502a2517b794b482db40"
 var contract;
+var weiRate;
 
 /**
  * Web page load listener
@@ -38,9 +39,12 @@ function retrieveDeployedContract() {
     // Retrieved the contract from the local geth node
     contract = web3.eth.contract(contract_abidefinition).at(contract_address);
 
-    getTokenGoal();
+    getWeiRate();
+    getWeiGoal();
+    getWeiCap();
     getWeiRaised();
-
+    getStartTime();
+    getEndTime();
 }
 
 function getWeiRaised() {
@@ -56,21 +60,77 @@ function getWeiRaised() {
     });
 }
 
-function getTokenGoal() {
+function getWeiGoal() {
     contract.goal.call(function(error, result) {
         if (error)
             console.log("Error");
         else {
             console.log("There was a result");
-            tokenGoal = JSON.stringify(result);
+            updateUI('wei_goal', result);
+        }
+    });
+}
 
-            updateUI('token_goal', result);
+function getWeiCap() {
+    contract.cap.call(function(error, result) {
+        if (error)
+            console.log("Error");
+        else {
+            console.log("There was a result");
+            updateUI('wei_cap', result);
+        }
+    });
+}
+
+
+function getWeiRate() {
+    contract.rate.call(function(error, result) {
+        if (error)
+            console.log("Error");
+        else {
+            console.log("There was a result");
+            weiRate = result;
+            updateCost();
+
+        }
+    });
+}
+
+
+function getStartTime() {
+    contract.startTime.call(function(error, result) {
+        if (error)
+            console.log("Error");
+        else {
+            console.log("There was a result");
+            var startTime = new Date(result*1000);
+            updateUI('start_time', startTime.toUTCString());
+        }
+    });
+}
+
+function getEndTime() {
+    contract.endTime.call(function(error, result) {
+        if (error)
+            console.log("Error");
+        else {
+            console.log("There was a result");
+            var endTime = new Date(result*1000);
+            updateUI('end_time', endTime.toUTCString());
         }
     });
 }
 
 function updateUI(docElementId, html)  {
     document.getElementById(docElementId).innerHTML = html;
+}
+
+function weiCost() {
+    return parseInt(parseFloat($("#num-tickets").val()) * weiRate);
+}
+
+function updateCost() {
+    updateUI('wei_cost',  weiCost());
 }
 
 $(function() {
@@ -84,7 +144,7 @@ $(function() {
                 var account = accounts[0];
                 var numTokens = parseInt($("#num-tickets").val());
 
-                contract.sendVal({ from: account, value: numTokens * 1000 });
+                contract.sendVal({ from: account, value: weiCost() });
                 console.log('Bought requested tokens');
                 getWeiRaised();
                 
@@ -92,5 +152,11 @@ $(function() {
             }
         });
 
+    });
+})
+
+$(function() {
+    $('#num-tickets').keyup(function() {
+        updateCost()
     });
 })
