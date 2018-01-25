@@ -80,29 +80,6 @@ function getWeiRaised() {
     });
 }
 
-function getWeiGoal() {
-    self.Lottery.goal.call(function(error, result) {
-        if (error)
-            console.log("Error");
-        else {
-            console.log("There was a result");
-            updateUI('wei_goal', result);
-        }
-    });
-}
-
-function getWeiCap() {
-    self.Lottery.cap.call(function(error, result) {
-        if (error)
-            console.log("Error");
-        else {
-            console.log("There was a result");
-            updateUI('wei_cap', result);
-        }
-    });
-}
-
-
 function getWeiRate() {
     self.Lottery.rate.call(function(error, result) {
         if (error)
@@ -115,7 +92,6 @@ function getWeiRate() {
         }
     });
 }
-
 
 function getStartTime() {
     self.Lottery.startTime.call(function(error, result) {
