@@ -1,11 +1,3 @@
-
-
-/**
- * Instance variables needed to interact with deployed contract
- */
-var contract;
-var weiRate;
-
 // /**
 //  * Web page load listener
 //  */
@@ -15,62 +7,75 @@ window.addEventListener('load', function() {
   // Checking if Web3 has been injected by the browser (Mist/MetaMask)
   if (typeof web3 !== 'undefined') {
 
-    // Use the browser's ethereum provider
-    var provider = web3.currentProvider
-
-    startApp();
+    if (web3 && web3.isConnected()) {
+        console.log("Web 3 is connected");
+        web3.version.getNetwork(function(error,result){
+            if (error){
+                console.log(error);
+            } else {
+                console.log("Successfully retrieved network_id");
+                self.network_id = parseInt(result);
+                initLottery();
+                setInterval(function() {
+                    if (web3.eth.accounts[0] !== account) {
+                        account = web3.eth.accounts[0];
+                        window.location.reload();
+                    }
+                }, 100);
+            }
+        });
+    }    
 
   } else {
     console.log('No web3? You should consider trying MetaMask!')
   }
+});
 
-})
-
-function startApp() {
-
-    if (web3 && web3.isConnected()) {
-        console.log("Web 3 is connected");
-    }
-    
-    getLotteryDefinition(retrieveDeployedContract)
-}
-
-function getLotteryDefinition(callback) {
+function initLottery() {
     $.getJSON("/ws/Lottery.json", function(def) {
-        self.lottery_def = def;
-        getNetworkID(callback);
+        // Retrieved the contract from the local geth node
+        contract_address = def.networks[self.network_id].address;
+        self.Lottery = web3.eth.contract(def['abi']).at(contract_address);
+
+        getWeiRate();
+        getWeiGoal();
+        getWeiCap();
+        getWeiRaised();
+        getStartTime();
+        initLotteryToken();
     });
 }
 
-function retrieveDeployedContract() {
-    // Retrieved the contract from the local geth node
-    self.contract_address = self.lottery_def.networks[self.network_id].address;
-
-    contract = web3.eth.contract(lottery_def['abi']).at(self.contract_address);
-
-    getWeiRate();
-    getWeiGoal();
-    getWeiCap();
-    getWeiRaised();
-    getStartTime();
-    getEndTime();
+function initLotteryToken(callback) {
+    $.getJSON("/ws/LotteryToken.json", function(def) {
+        self.Lottery.token(function(error,result){
+            if (error) {
+                console.log(error);
+            } else {
+                contract_address = result;
+                self.LotteryToken = web3.eth.contract(def['abi']).at(contract_address);
+                console.log("Loaded lottery tokens too");
+                updateAccountBalance();
+            }
+        })
+    });
 }
 
-function getNetworkID(callback){
-    web3.version.getNetwork(function(error,result){
+function updateAccountBalance() {
+    account = web3.eth.accounts[0];
+    self.LotteryToken.balanceOf(account,function(error,result){
         if (error){
             console.log(error);
         } else {
-            console.log("Successfully retrieved network_id");
-            self.network_id = parseInt(result);
-            callback();
+            updateUI('account',account);
+            updateUI('account_balance',result);            
         }
-    })
+    });
 }
 
 function getWeiRaised() {
     console.log("Getting message from contract");
-    contract.weiRaised.call(function(error, result) {
+    self.Lottery.weiRaised.call(function(error, result) {
         if (error) {
             console.log("There was an error");
             updateUI('wei_raised', "There was an error", true);
@@ -82,7 +87,7 @@ function getWeiRaised() {
 }
 
 function getWeiGoal() {
-    contract.goal.call(function(error, result) {
+    self.Lottery.goal.call(function(error, result) {
         if (error)
             console.log("Error");
         else {
@@ -93,7 +98,7 @@ function getWeiGoal() {
 }
 
 function getWeiCap() {
-    contract.cap.call(function(error, result) {
+    self.Lottery.cap.call(function(error, result) {
         if (error)
             console.log("Error");
         else {
@@ -105,12 +110,12 @@ function getWeiCap() {
 
 
 function getWeiRate() {
-    contract.rate.call(function(error, result) {
+    self.Lottery.rate.call(function(error, result) {
         if (error)
             console.log("Error");
         else {
             console.log("There was a result");
-            weiRate = result;
+            self.weiRate = result;
             updateCost();
 
         }
@@ -119,25 +124,33 @@ function getWeiRate() {
 
 
 function getStartTime() {
-    contract.startTime.call(function(error, result) {
+    self.Lottery.startTime.call(function(error, result) {
         if (error)
             console.log("Error");
         else {
             console.log("There was a result");
             var startTime = new Date(result*1000);
-            updateUI('start_time', startTime.toUTCString());
+
+            if (startTime > new Date()) {
+                updateUI('countdown_text','Starting')
+                initializeClock('clockdiv', startTime);
+            } else {
+                getEndTime()
+            }
+
         }
     });
 }
 
 function getEndTime() {
-    contract.endTime.call(function(error, result) {
+    self.Lottery.endTime.call(function(error, result) {
         if (error)
             console.log("Error");
         else {
             console.log("There was a result");
             var endTime = new Date(result*1000);
-            updateUI('end_time', endTime.toUTCString());
+            updateUI('countdown_text','Ending')
+            initializeClock('clockdiv', endTime);
         }
     });
 }
@@ -147,7 +160,7 @@ function updateUI(docElementId, html)  {
 }
 
 function weiCost() {
-    return parseInt(parseFloat($("#num-tickets").val()) * weiRate);
+    return parseInt(parseFloat($("#num-tickets").val()) * self.weiRate);
 }
 
 function updateCost() {
@@ -157,28 +170,17 @@ function updateCost() {
 $(function() {
     $('#btn-buy').click(function() {
 
-        web3.eth.getAccounts(function(error, accounts) {
+        var numTokens = parseInt($("#num-tickets").val());
+
+        self.Lottery.buyTokens(account, {value: weiCost() }, function(error) {
             if (error) {
                 console.log(error);
             }
             else {
-                var account = accounts[0];
-                var numTokens = parseInt($("#num-tickets").val());
-
-                contract.buyTokens(account, {value: weiCost() }, function(error) {
-                    if (error) {
-                        console.log(error);
-                    }
-                    else {
-                        console.log('Bought requested tokens');
-                        getWeiRaised();
-                    }
-                });
-                
-                //web3.eth.sendTransaction({to:contract_address, from:account, value: numTokens * 1000});
+                console.log('Bought requested tokens');
+                getWeiRaised();
             }
         });
-
     });
 })
 
@@ -187,3 +189,46 @@ $(function() {
         updateCost()
     });
 })
+
+// --- BEGINNING OF COUNTDOWN
+
+function getTimeRemaining(endtime) {
+  var t = Date.parse(endtime) - Date.parse(new Date());
+  var seconds = Math.floor((t / 1000) % 60);
+  var minutes = Math.floor((t / 1000 / 60) % 60);
+  var hours = Math.floor((t / (1000 * 60 * 60)) % 24);
+  var days = Math.floor(t / (1000 * 60 * 60 * 24));
+  return {
+    'total': t,
+    'days': days,
+    'hours': hours,
+    'minutes': minutes,
+    'seconds': seconds
+  };
+}
+
+function initializeClock(id, endtime) {
+  var clock = document.getElementById(id);
+  var daysSpan = clock.querySelector('.days');
+  var hoursSpan = clock.querySelector('.hours');
+  var minutesSpan = clock.querySelector('.minutes');
+  var secondsSpan = clock.querySelector('.seconds');
+
+  function updateClock() {
+    var t = getTimeRemaining(endtime);
+
+    daysSpan.innerHTML = t.days;
+    hoursSpan.innerHTML = ('0' + t.hours).slice(-2);
+    minutesSpan.innerHTML = ('0' + t.minutes).slice(-2);
+    secondsSpan.innerHTML = ('0' + t.seconds).slice(-2);
+
+    if (t.total <= 0) {
+      clearInterval(timeinterval);
+    }
+  }
+
+  updateClock();
+  var timeinterval = setInterval(updateClock, 1000);
+}
+
+// ---- END OF COUNTDOWN
