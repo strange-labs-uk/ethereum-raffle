@@ -65,4 +65,3 @@ Copy deployed address of "Lottery: ....":
 Refresh page at http://localhost:3000
     
     Front End should display the goal of the Fund Raise == 10000
-	

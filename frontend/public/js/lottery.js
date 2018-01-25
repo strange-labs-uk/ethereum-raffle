@@ -3,21 +3,28 @@
 /**
  * Instance variables needed to interact with deployed contract
  */
-var contract_abidefinition = ""
-var contract_address = "0x9fbda871d559710256a2502a2517b794b482db40"
 var contract;
 var weiRate;
 
-/**
- * Web page load listener
- */
+// /**
+//  * Web page load listener
+//  */
+
 window.addEventListener('load', function() {
 
-    //Web3 instance from the truffle develop || testrpc || private chain
-    window.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:9545'));
+  // Checking if Web3 has been injected by the browser (Mist/MetaMask)
+  if (typeof web3 !== 'undefined') {
+
+    // Use the browser's ethereum provider
+    var provider = web3.currentProvider
 
     startApp();
-});
+
+  } else {
+    console.log('No web3? You should consider trying MetaMask!')
+  }
+
+})
 
 function startApp() {
 
@@ -25,19 +32,21 @@ function startApp() {
         console.log("Web 3 is connected");
     }
     
-    getAbiDefinition(retrieveDeployedContract)
+    getLotteryDefinition(retrieveDeployedContract)
 }
 
-function getAbiDefinition(callback) {
+function getLotteryDefinition(callback) {
     $.getJSON("/ws/Lottery.json", function(def) {
-        contract_abidefinition = def["abi"];
-        callback();
+        self.lottery_def = def;
+        getNetworkID(callback);
     });
 }
 
 function retrieveDeployedContract() {
     // Retrieved the contract from the local geth node
-    contract = web3.eth.contract(contract_abidefinition).at(contract_address);
+    self.contract_address = self.lottery_def.networks[self.network_id].address;
+
+    contract = web3.eth.contract(lottery_def['abi']).at(self.contract_address);
 
     getWeiRate();
     getWeiGoal();
@@ -45,6 +54,18 @@ function retrieveDeployedContract() {
     getWeiRaised();
     getStartTime();
     getEndTime();
+}
+
+function getNetworkID(callback){
+    web3.version.getNetwork(function(error,result){
+        if (error){
+            console.log(error);
+        } else {
+            console.log("Successfully retrieved network_id");
+            self.network_id = parseInt(result);
+            callback();
+        }
+    })
 }
 
 function getWeiRaised() {
@@ -144,9 +165,15 @@ $(function() {
                 var account = accounts[0];
                 var numTokens = parseInt($("#num-tickets").val());
 
-                contract.sendVal({ from: account, value: weiCost() });
-                console.log('Bought requested tokens');
-                getWeiRaised();
+                contract.sendVal({ from: account, value: weiCost() }, function(error, accounts) {
+                    if (error) {
+                        console.log(error);
+                    }
+                    else {
+                        console.log('Bought requested tokens');
+                        getWeiRaised();
+                    }
+                });
                 
                 //web3.eth.sendTransaction({to:contract_address, from:account, value: numTokens * 1000});
             }
