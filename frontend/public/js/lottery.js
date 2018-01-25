@@ -34,8 +34,6 @@ function initLottery() {
         self.Lottery = web3.eth.contract(def['abi']).at(contract_address);
 
         getWeiRate();
-        getWeiGoal();
-        getWeiCap();
         getWeiRaised();
         getStartTime();
         initLotteryToken();
