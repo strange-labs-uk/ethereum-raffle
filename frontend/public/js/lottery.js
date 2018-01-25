@@ -17,8 +17,7 @@ window.addEventListener('load', function() {
                 self.network_id = parseInt(result);
                 initLottery();
                 setInterval(function() {
-                    if (web3.eth.accounts[0] !== account) {
-                        account = web3.eth.accounts[0];
+                    if (web3.eth.accounts[0] !== self.account) {
                         window.location.reload();
                     }
                 }, 100);
@@ -62,12 +61,12 @@ function initLotteryToken(callback) {
 }
 
 function updateAccountBalance() {
-    account = web3.eth.accounts[0];
-    self.LotteryToken.balanceOf(account,function(error,result){
+    self.account = web3.eth.accounts[0];
+    self.LotteryToken.balanceOf(self.account,function(error,result){
         if (error){
             console.log(error);
         } else {
-            updateUI('account',account);
+            updateUI('account',self.account);
             updateUI('account_balance',result);            
         }
     });
@@ -172,13 +171,14 @@ $(function() {
 
         var numTokens = parseInt($("#num-tickets").val());
 
-        self.Lottery.buyTokens(account, {value: weiCost() }, function(error) {
+        self.Lottery.buyTokens(self.account, {value: weiCost() }, function(error) {
             if (error) {
                 console.log(error);
             }
             else {
                 console.log('Bought requested tokens');
                 getWeiRaised();
+                updateAccountBalance();
             }
         });
     });
