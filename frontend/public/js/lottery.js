@@ -191,6 +191,7 @@ $(function() {
 })
 
 // --- BEGINNING OF COUNTDOWN
+// --- obtained from https://codepen.io/SitePoint/pen/MwNPVq
 
 function getTimeRemaining(endtime) {
   var t = Date.parse(endtime) - Date.parse(new Date());
