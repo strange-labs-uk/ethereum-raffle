@@ -13,11 +13,6 @@ function init() {
                     console.log("Successfully retrieved network_id");
                     self.network_id = parseInt(result);
                     initLottery();
-                    setInterval(function() {
-                        if (web3.eth.accounts[0] !== self.account) {
-                            window.location.reload();
-                        }
-                    }, 100);
                 }
             });
         }    
@@ -27,7 +22,7 @@ function init() {
     }
 }
 
-function initLottery() {
+function initLottery(callback) {
     $.getJSON("/ws/Lottery.json", function(def) {
         // Retrieved the contract from the local geth node
         contract_address = def.networks[self.network_id].address;
