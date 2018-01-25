@@ -1,34 +1,31 @@
-// /**
-//  * Web page load listener
-//  */
 
-window.addEventListener('load', function() {
 
-  // Checking if Web3 has been injected by the browser (Mist/MetaMask)
-  if (typeof web3 !== 'undefined') {
+function init() {
+    // Checking if Web3 has been injected by the browser (Mist/MetaMask)
+    if (typeof web3 !== 'undefined') {
 
-    if (web3 && web3.isConnected()) {
-        console.log("Web 3 is connected");
-        web3.version.getNetwork(function(error,result){
-            if (error){
-                console.log(error);
-            } else {
-                console.log("Successfully retrieved network_id");
-                self.network_id = parseInt(result);
-                initLottery();
-                setInterval(function() {
-                    if (web3.eth.accounts[0] !== self.account) {
-                        window.location.reload();
-                    }
-                }, 100);
-            }
-        });
-    }    
+        if (web3 && web3.isConnected()) {
+            console.log("Web 3 is connected");
+            web3.version.getNetwork(function(error,result){
+                if (error){
+                    console.log(error);
+                } else {
+                    console.log("Successfully retrieved network_id");
+                    self.network_id = parseInt(result);
+                    initLottery();
+                    setInterval(function() {
+                        if (web3.eth.accounts[0] !== self.account) {
+                            window.location.reload();
+                        }
+                    }, 100);
+                }
+            });
+        }    
 
-  } else {
-    console.log('No web3? You should consider trying MetaMask!')
-  }
-});
+    } else {
+        console.log('No web3? You should consider trying MetaMask!')
+    }
+}
 
 function initLottery() {
     $.getJSON("/ws/Lottery.json", function(def) {
@@ -166,29 +163,37 @@ function updateCost() {
     updateUI('wei_cost',  weiCost());
 }
 
-$(function() {
-    $('#btn-buy').click(function() {
+function buyClicked() {
+    var numTokens = parseInt($("#num-tickets").val());
 
-        var numTokens = parseInt($("#num-tickets").val());
-
-        self.Lottery.buyTokens(self.account, {value: weiCost() }, function(error) {
-            if (error) {
-                console.log(error);
-            }
-            else {
-                console.log('Bought requested tokens');
-                getWeiRaised();
-                updateAccountBalance();
-            }
-        });
+    self.Lottery.buyTokens(self.account, {value: weiCost() }, function(error) {
+        if (error) {
+            console.log(error);
+        }
+        else {
+            console.log('Bought requested tokens');
+            getWeiRaised();
+            updateAccountBalance();
+        }
     });
-})
+}
 
+// /**
+//  * Fired on web page load
+//  */
 $(function() {
+    init();
+    
+    $('#btn-buy').click(function() {
+        buyClicked();
+    });
+    
     $('#num-tickets').keyup(function() {
         updateCost()
     });
 })
+
+
 
 // --- BEGINNING OF COUNTDOWN
 // --- obtained from https://codepen.io/SitePoint/pen/MwNPVq
