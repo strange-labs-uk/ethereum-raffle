@@ -55,10 +55,6 @@ contract Lottery is CappedCrowdsale, RefundableCrowdsale {
     tallyTokens(numInvestors, tokens);
   }
 
-  function sendVal() public payable {
-    buyTokens(msg.sender);
-  }
-
   // low level token purchase function
   function buyTokens(address beneficiary) public payable {
     require(beneficiary != address(0));

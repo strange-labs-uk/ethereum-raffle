@@ -165,7 +165,7 @@ $(function() {
                 var account = accounts[0];
                 var numTokens = parseInt($("#num-tickets").val());
 
-                contract.sendVal({ from: account, value: weiCost() }, function(error, accounts) {
+                contract.buyTokens(account, {value: weiCost() }, function(error) {
                     if (error) {
                         console.log(error);
                     }
