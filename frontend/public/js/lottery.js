@@ -35,7 +35,7 @@ function initLottery(callback) {
     });
 }
 
-function initLotteryToken(callback) {
+function initLotteryToken() {
     $.getJSON("/ws/LotteryToken.json", function(def) {
         self.Lottery.token(function(error,result){
             if (error) {
