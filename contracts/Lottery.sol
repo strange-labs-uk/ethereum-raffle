@@ -38,7 +38,7 @@ contract Lottery is Crowdsale, Ownable {
         uint256 weiAmount = msg.value;
 
         // calculate token amount to be created
-        uint256 tokens = weiAmount.mul(rate);
+        uint256 tokens = weiAmount/rate;
 
         // update state
         weiRaised = weiRaised.add(weiAmount);
