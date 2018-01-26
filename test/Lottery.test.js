@@ -19,9 +19,9 @@ contract('Lottery', function (accounts) {
   const wallet = accounts[1];
   const investor = accounts[2];
 
-  const RATE = new BigNumber(10);
-  const GOAL = ether(10);
-  const CAP = ether(20);
+  const rate = new BigNumber(1000);
+  const expectedTokenAmount = 2;
+  const investmentAmount = expectedTokenAmount * rate; // in wei
 
   before(async function () {
     // Advance to the next block to correctly read time in the solidity "now" function interpreted by testrpc
@@ -33,45 +33,58 @@ contract('Lottery', function (accounts) {
     this.endTime = this.startTime + duration.weeks(1);
     this.afterEndTime = this.endTime + duration.seconds(1);
 
-    this.crowdsale = await Lottery.new(this.startTime, this.endTime, RATE, wallet);
-    this.token = LotteryToken.at(await this.crowdsale.token());
+    this.lottery = await Lottery.new(this.startTime, this.endTime, rate, wallet);
+    this.token = LotteryToken.at(await this.lottery.token());
   });
 
-  it('should create crowdsale with correct parameters', async function () {
-    this.crowdsale.should.exist;
+  it('should create lottery with correct parameters', async function () {
+    this.lottery.should.exist;
     this.token.should.exist;
 
-    const startTime = await this.crowdsale.startTime();
-    const endTime = await this.crowdsale.endTime();
-    const rate = await this.crowdsale.rate();
-    const walletAddress = await this.crowdsale.wallet();
+    const startTime = await this.lottery.startTime();
+    const endTime = await this.lottery.endTime();
+    const rate = await this.lottery.rate();
+    const walletAddress = await this.lottery.wallet();
 
     startTime.should.be.bignumber.equal(this.startTime);
     endTime.should.be.bignumber.equal(this.endTime);
-    rate.should.be.bignumber.equal(RATE);
+    rate.should.be.bignumber.equal(rate);
     walletAddress.should.be.equal(wallet);
   });
 
   it('should not accept payments before start', async function () {
-    await this.crowdsale.send(ether(1)).should.be.rejectedWith(EVMRevert);
-    await this.crowdsale.buyTokens(investor, { from: investor, value: ether(1) }).should.be.rejectedWith(EVMRevert);
+    await this.lottery.send(investmentAmount).should.be.rejectedWith(EVMRevert);
+    await this.lottery.buyTokens(investor, { from: investor, value: investmentAmount }).should.be.rejectedWith(EVMRevert);
   });
 
   it('should accept payments during the sale', async function () {
-    const investmentAmount = ether(1);
-    const expectedTokenAmount = investmentAmount/RATE;
-
     await increaseTimeTo(this.startTime);
-    await this.crowdsale.buyTokens(investor, { value: investmentAmount, from: investor }).should.be.fulfilled;
+    await this.lottery.buyTokens(investor, { value: investmentAmount, from: investor }).should.be.fulfilled;
 
     (await this.token.balanceOf(investor)).should.be.bignumber.equal(expectedTokenAmount);
     (await this.token.totalSupply()).should.be.bignumber.equal(expectedTokenAmount);
   });
 
   it('should reject payments after end', async function () {
-    await increaseTimeTo(this.afterEnd);
-    await this.crowdsale.send(ether(1)).should.be.rejectedWith(EVMRevert);
-    await this.crowdsale.buyTokens(investor, { value: ether(1), from: investor }).should.be.rejectedWith(EVMRevert);
+    await increaseTimeTo(this.afterEndTime);
+    await this.lottery.send(investmentAmount).should.be.rejectedWith(EVMRevert);
+    await this.lottery.buyTokens(investor, { value: investmentAmount, from: investor }).should.be.rejectedWith(EVMRevert);
+  });
+
+  it('should reject running draw before end of raffle or if no tokens have been purchased', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.lottery.runDraw().should.be.rejectedWith(EVMRevert);
+
+    await increaseTimeTo(this.afterEndTime);
+    await this.lottery.runDraw().should.be.rejectedWith(EVMRevert);    
+  });
+
+  it('should be able to run draw after the raffle draw and tokens have been purchased', async function () {
+    await increaseTimeTo(this.startTime);
+    await this.lottery.buyTokens(investor, { value: investmentAmount, from: investor }).should.be.fulfilled;
+
+    await increaseTimeTo(this.afterEndTime);
+    await this.lottery.runDraw().should.be.fulfilled;
   });
 
 });

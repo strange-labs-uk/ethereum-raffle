@@ -12,8 +12,14 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 contract Lottery is Crowdsale, Ownable {
 
     address[] public investorAddresses;
-    uint256 public numTokensIssued; 
-    event TallyTokens(uint256 numTokensIssued, uint256 numTokens);
+    uint256 public numTokensIssued;    
+    uint256 private secretNumber;
+
+    // DO NOT BROADCAST secretNumber IN THE PRODUCTION CONTRACT
+    event TallyTokens(uint256 numTokensIssued, uint256 numTokens, uint256 secretNumber);
+
+    // Event to announce the winner - suppose we do not want to announce the winner in the future
+    event AnnounceWinner(uint256 winnerIndex, address winningAddress);
 
     function Lottery(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public
     Crowdsale(_startTime, _endTime, _rate, _wallet)
@@ -21,12 +27,15 @@ contract Lottery is Crowdsale, Ownable {
     {
     }
 
-    function registerAddress(uint256 numTokens) {
+    function registerAddress(uint256 numTokens, address beneficiary) private {
         for (uint256 i = 0; i < numTokens; i ++) {
-            investorAddresses.push(msg.sender);    
+            investorAddresses.push(beneficiary);
+            secretNumber += uint256(beneficiary);
         }
         numTokensIssued = investorAddresses.length;
-        TallyTokens(numTokensIssued, numTokens);        
+
+        // DO NOT BROADCAST secretNumber IN THE PRODUCTION CONTRACT
+        TallyTokens(numTokensIssued, numTokens, secretNumber);
     }
 
     // low level token purchase function
@@ -45,13 +54,16 @@ contract Lottery is Crowdsale, Ownable {
         token.mint(beneficiary, numTokens);
         TokenPurchase(msg.sender, beneficiary, weiAmount, numTokens);
 
-        registerAddress(numTokens);
-
         forwardFunds();
+
+        registerAddress(numTokens, beneficiary);
     }
     
     function runDraw() onlyOwner public {
-        numTokensIssued += 1;
+        require(hasEnded() == true);
+        require(numTokensIssued > 0);
+        uint256 winnerIndex = secretNumber%numTokensIssued;
+        AnnounceWinner(winnerIndex, investorAddresses[winnerIndex]);
     }
 
 }

@@ -14,17 +14,19 @@ In the `truffle(develop)>` console:
 
 	deploy --reset
 
-Now you can interact with the lottery contract. Lets send an ether to the lottery DApp to buy lottery tokens.
+Now you can interact with the lottery contract. Lets send wei to the lottery DApp in exchange for tokens and simultaneous check the total number issued:
 	
 	lot = Lottery.deployed()
-	lot.then(function(instance){return instance.buyToken(web3.eth.coinbase,{value:1000});})
-	lot.then(instance=>instance.weiRaised())
+	lot.then(i=>i.buyTokens(web3.eth.coinbase,{value:10000,gas:1721975,gasPrice: 1000000})).then(i=>i.logs[1].args)
 
 Check the token balance balance:
 	
-	lot = Lottery.at(Lottery.address)
-	ltk = lot.token().then(address=>LotteryToken.at(address))
-	ltk.then(instance=>instance.balanceOf(web3.eth.coinbase))
+	tok = lot.token().then(address=>MintableToken.at(address))
+	tok.then(instance=>instance.balanceOf(web3.eth.coinbase))
+
+Run draw once the raffle time is up:
+
+	lot.then(i=>i.runDraw()).then(i=>i.logs[0].args)
 
 The best thing to do to ensure that the contract is functioning as expected seems to be to build unit tests into `test/Lottery.test.js` and run `test` inside `truffle(develop)>` console.
 
