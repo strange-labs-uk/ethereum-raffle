@@ -47,7 +47,7 @@ function initLottery() {
 
         getWeiRate();
         getWeiRaised();
-        getStartTime();
+        initTime();
         initLotteryToken();
     });
 }
@@ -106,6 +106,19 @@ function getWeiRate() {
     });
 }
 
+function initTime() {
+    web3.eth.getBlock('latest',function(error, result) {
+        if (error) {
+            console.log("web3.eth.getBlock('latest') fail");
+            console.log(error);
+        } else {
+            console.log("web3.eth.getBlock('latest') success");
+            self.latestTime = new Date(result.timestamp*1000);
+            getStartTime();
+        }
+    });
+}
+
 function getStartTime() {
     self.Lottery.startTime.call(function(error, result) {
         if (error) {
@@ -113,13 +126,13 @@ function getStartTime() {
             console.log(error);
         } else {
             console.log("Lottery.startTime success");
-            var startTime = new Date(result*1000);
+            self.startTime = new Date(result*1000);
 
-            if (startTime > new Date()) {
-                updateUI('countdown_text','Starting')
-                initializeClock('clockdiv', startTime);
+            if (self.startTime > self.latestTime) {
+                updateUI('countdown_text', 'Starting')
+                initializeClock(startTime);
             } else {
-                getEndTime()
+                getEndTime();
             }
 
         }
@@ -134,8 +147,9 @@ function getEndTime() {
         } else {
             console.log("Lottery.endTime success");
             var endTime = new Date(result*1000);
-            updateUI('countdown_text','Ending')
-            initializeClock('clockdiv', endTime);
+
+            updateUI('countdown_text', 'Ending')
+            initializeClock(endTime);
         }
     });
 }
@@ -195,8 +209,8 @@ $(function() {
 // --- BEGINNING OF COUNTDOWN
 // --- obtained from https://codepen.io/SitePoint/pen/MwNPVq
 
-function getTimeRemaining(endtime) {
-  var t = Date.parse(endtime) - Date.parse(new Date());
+function getTimeRemaining(untilTime, delta) {
+  var t = untilTime - new Date() + delta;
   var seconds = Math.floor((t / 1000) % 60);
   var minutes = Math.floor((t / 1000 / 60) % 60);
   var hours = Math.floor((t / (1000 * 60 * 60)) % 24);
@@ -210,28 +224,29 @@ function getTimeRemaining(endtime) {
   };
 }
 
-function initializeClock(id, endtime) {
-  var clock = document.getElementById(id);
-  var daysSpan = clock.querySelector('.days');
-  var hoursSpan = clock.querySelector('.hours');
-  var minutesSpan = clock.querySelector('.minutes');
-  var secondsSpan = clock.querySelector('.seconds');
+function initializeClock(untilTime) {
+      var clock = document.getElementById('clockdiv');
+      var daysSpan = clock.querySelector('.days');
+      var hoursSpan = clock.querySelector('.hours');
+      var minutesSpan = clock.querySelector('.minutes');
+      var secondsSpan = clock.querySelector('.seconds');
+      var delta = new Date() - self.latestTime
 
-  function updateClock() {
-    var t = getTimeRemaining(endtime);
+      function updateClock() {
+        var t = getTimeRemaining(untilTime, delta);
 
-    daysSpan.innerHTML = t.days;
-    hoursSpan.innerHTML = ('0' + t.hours).slice(-2);
-    minutesSpan.innerHTML = ('0' + t.minutes).slice(-2);
-    secondsSpan.innerHTML = ('0' + t.seconds).slice(-2);
+        daysSpan.innerHTML = t.days;
+        hoursSpan.innerHTML = ('0' + t.hours).slice(-2);
+        minutesSpan.innerHTML = ('0' + t.minutes).slice(-2);
+        secondsSpan.innerHTML = ('0' + t.seconds).slice(-2);
 
-    if (t.total <= 0) {
-      clearInterval(timeinterval);
-    }
-  }
+        if (t.total <= 0) {
+          clearInterval(timeInterval);
+        }
+      }
 
-  updateClock();
-  var timeinterval = setInterval(updateClock, 1000);
+      updateClock();
+      var timeInterval = setInterval(updateClock, 1000);
 }
 
 // ---- END OF COUNTDOWN
