@@ -33,7 +33,7 @@ contract('Lottery', function (accounts) {
     this.endTime = this.startTime + duration.weeks(1);
     this.afterEndTime = this.endTime + duration.seconds(1);
 
-    this.crowdsale = await Lottery.new(this.startTime, this.endTime, RATE, GOAL, CAP, wallet);
+    this.crowdsale = await Lottery.new(this.startTime, this.endTime, RATE, wallet);
     this.token = LotteryToken.at(await this.crowdsale.token());
   });
 
@@ -45,15 +45,11 @@ contract('Lottery', function (accounts) {
     const endTime = await this.crowdsale.endTime();
     const rate = await this.crowdsale.rate();
     const walletAddress = await this.crowdsale.wallet();
-    const goal = await this.crowdsale.goal();
-    const cap = await this.crowdsale.cap();
 
     startTime.should.be.bignumber.equal(this.startTime);
     endTime.should.be.bignumber.equal(this.endTime);
     rate.should.be.bignumber.equal(RATE);
     walletAddress.should.be.equal(wallet);
-    goal.should.be.bignumber.equal(GOAL);
-    cap.should.be.bignumber.equal(CAP);
   });
 
   it('should not accept payments before start', async function () {
@@ -63,7 +59,7 @@ contract('Lottery', function (accounts) {
 
   it('should accept payments during the sale', async function () {
     const investmentAmount = ether(1);
-    const expectedTokenAmount = RATE.mul(investmentAmount);
+    const expectedTokenAmount = investmentAmount/RATE;
 
     await increaseTimeTo(this.startTime);
     await this.crowdsale.buyTokens(investor, { value: investmentAmount, from: investor }).should.be.fulfilled;
@@ -78,35 +74,4 @@ contract('Lottery', function (accounts) {
     await this.crowdsale.buyTokens(investor, { value: ether(1), from: investor }).should.be.rejectedWith(EVMRevert);
   });
 
-  it('should reject payments over cap', async function () {
-    await increaseTimeTo(this.startTime);
-    await this.crowdsale.send(CAP);
-    await this.crowdsale.send(1).should.be.rejectedWith(EVMRevert);
-  });
-
-  it('should allow finalization and transfer funds to wallet if the goal is reached', async function () {
-    await increaseTimeTo(this.startTime);
-    await this.crowdsale.send(GOAL);
-
-    const beforeFinalization = web3.eth.getBalance(wallet);
-    await increaseTimeTo(this.afterEndTime);
-    await this.crowdsale.finalize({ from: owner });
-    const afterFinalization = web3.eth.getBalance(wallet);
-
-    afterFinalization.minus(beforeFinalization).should.be.bignumber.equal(GOAL);
-  });
-
-  it('should allow refunds if the goal is not reached', async function () {
-    const balanceBeforeInvestment = web3.eth.getBalance(investor);
-
-    await increaseTimeTo(this.startTime);
-    await this.crowdsale.sendTransaction({ value: ether(1), from: investor, gasPrice: 0 });
-    await increaseTimeTo(this.afterEndTime);
-
-    await this.crowdsale.finalize({ from: owner });
-    await this.crowdsale.claimRefund({ from: investor, gasPrice: 0 }).should.be.fulfilled;
-
-    const balanceAfterRefund = web3.eth.getBalance(investor);
-    balanceBeforeInvestment.should.be.bignumber.equal(balanceAfterRefund);
-  });
 });

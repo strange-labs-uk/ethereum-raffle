@@ -12,7 +12,7 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 contract Lottery is Crowdsale, Ownable {
 
     address[] public investorAddresses;
-    //uint256 public numInvestors; 
+    uint256 public numInvestors; 
     event tallyTokens(uint256 numTokens, uint256 tokens);
 
     function Lottery(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public
@@ -52,7 +52,7 @@ contract Lottery is Crowdsale, Ownable {
     }
     
     function runDraw() onlyOwner public {
-
+        numInvestors += 1;
     }
 
 }
