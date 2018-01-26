@@ -12,8 +12,8 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 contract Lottery is Crowdsale, Ownable {
 
     address[] public investorAddresses;
-    uint256 public numInvestors; 
-    event tallyTokens(uint256 numTokens, uint256 tokens);
+    uint256 public numTokensIssued; 
+    event TallyTokens(uint256 numTokensIssued, uint256 numTokens);
 
     function Lottery(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public
     Crowdsale(_startTime, _endTime, _rate, _wallet)
@@ -21,14 +21,13 @@ contract Lottery is Crowdsale, Ownable {
     {
     }
 
-    /*function registerAddress(uint256 tokens) {
-    for (uint i = 0; i < tokens; tokens ++)
-    {
-      investorAddresses.push(msg.sender);    
+    function registerAddress(uint256 numTokens) {
+        for (uint256 i = 0; i < numTokens; i ++) {
+            investorAddresses.push(msg.sender);    
+        }
+        numTokensIssued = investorAddresses.length;
+        TallyTokens(numTokensIssued, numTokens);        
     }
-    numInvestors = investorAddresses.length;
-    tallyTokens(numInvestors, tokens);
-    }*/
 
     // low level token purchase function
     function buyTokens(address beneficiary) public payable {
@@ -38,21 +37,21 @@ contract Lottery is Crowdsale, Ownable {
         uint256 weiAmount = msg.value;
 
         // calculate token amount to be created
-        uint256 tokens = weiAmount/rate;
+        uint256 numTokens = weiAmount/rate;
 
         // update state
         weiRaised = weiRaised.add(weiAmount);
 
-        token.mint(beneficiary, tokens);
-        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+        token.mint(beneficiary, numTokens);
+        TokenPurchase(msg.sender, beneficiary, weiAmount, numTokens);
 
-        // registerAddress(tokens);
+        registerAddress(numTokens);
 
         forwardFunds();
     }
     
     function runDraw() onlyOwner public {
-        numInvestors += 1;
+        numTokensIssued += 1;
     }
 
 }
