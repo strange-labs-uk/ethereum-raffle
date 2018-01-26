@@ -53,7 +53,7 @@ function initLottery() {
 }
 
 function initLotteryToken() {
-    $.getJSON("/ws/LotteryToken.json", function(def) {
+    $.getJSON("/ws/MintableToken.json", function(def) {
         self.Lottery.token(function(error,result){
             if (error) {
                 console.log("Lottery.token fail");
