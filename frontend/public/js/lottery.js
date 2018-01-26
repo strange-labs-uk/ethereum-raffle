@@ -5,14 +5,27 @@ function init() {
     if (typeof web3 !== 'undefined') {
 
         if (web3 && web3.isConnected()) {
-            console.log("Web 3 is connected");
+            console.log("web3 is connected");
             web3.version.getNetwork(function(error,result){
                 if (error){
+                    console.log("web3.version.getNetwork fail");
                     console.log(error);
                 } else {
-                    console.log("Successfully retrieved network_id");
+                    console.log("web3.version.getNetwork success");
                     self.network_id = parseInt(result);
                     initLottery();
+                    setInterval(function() {
+                        // Check and updateAccountBalance if the user has changed account every second
+                        if (web3.eth.accounts[0] !== self.account) {
+                            updateAccountBalance();
+                        }
+                    }, 1000);
+                    setInterval(function() {
+                        /*  updateAccountBalance and getWeiRaised every minute
+                            in case tokens are being bought elsewhere */
+                        updateAccountBalance();
+                        getWeiRaised();
+                    }, 60000);                    
                 }
             });
         }    
@@ -22,11 +35,15 @@ function init() {
     }
 }
 
-function initLottery(callback) {
+function updateCost() {
+    updateUI('wei_cost',  weiCost());
+}
+
+function initLottery() {
     $.getJSON("/ws/Lottery.json", function(def) {
         // Retrieved the contract from the local geth node
-        contract_address = def.networks[self.network_id].address;
-        self.Lottery = web3.eth.contract(def['abi']).at(contract_address);
+        self.Lottery = web3.eth.contract(def['abi'])
+                        .at(def.networks[self.network_id].address);
 
         getWeiRate();
         getWeiRaised();
@@ -39,11 +56,11 @@ function initLotteryToken() {
     $.getJSON("/ws/LotteryToken.json", function(def) {
         self.Lottery.token(function(error,result){
             if (error) {
+                console.log("Lottery.token fail");
                 console.log(error);
             } else {
-                contract_address = result;
-                self.LotteryToken = web3.eth.contract(def['abi']).at(contract_address);
-                console.log("Loaded lottery tokens too");
+                console.log("Lottery.token success");
+                self.LotteryToken = web3.eth.contract(def['abi']).at(result);
                 updateAccountBalance();
             }
         })
@@ -54,8 +71,10 @@ function updateAccountBalance() {
     self.account = web3.eth.accounts[0];
     self.LotteryToken.balanceOf(self.account,function(error,result){
         if (error){
+            console.log("LotteryToken.balanceOf fail");
             console.log(error);
         } else {
+            console.log("LotteryToken.balanceOf success");
             updateUI('account',self.account);
             updateUI('account_balance',result);            
         }
@@ -63,37 +82,37 @@ function updateAccountBalance() {
 }
 
 function getWeiRaised() {
-    console.log("Getting message from contract");
     self.Lottery.weiRaised.call(function(error, result) {
         if (error) {
-            console.log("There was an error");
-            updateUI('wei_raised', "There was an error", true);
+            console.log("Lottery.weiRaised fail");
+            console.log(error);
         } else {
-            updateUI('wei_raised', result, false);
-            console.log("Updated UI message successfully"); 
+            console.log("Lottery.weiRaised success");
+            updateUI('wei_raised', result);
         }
     });
 }
 
 function getWeiRate() {
     self.Lottery.rate.call(function(error, result) {
-        if (error)
-            console.log("Error");
-        else {
-            console.log("There was a result");
+        if (error) {
+            console.log("Lottery.rate fail");
+            console.log(error);
+        } else {
+            console.log("Lottery.rate success");
             self.weiRate = result;
             updateCost();
-
         }
     });
 }
 
 function getStartTime() {
     self.Lottery.startTime.call(function(error, result) {
-        if (error)
-            console.log("Error");
-        else {
-            console.log("There was a result");
+        if (error) {
+            console.log("Lottery.startTime fail");
+            console.log(error);
+        } else {
+            console.log("Lottery.startTime success");
             var startTime = new Date(result*1000);
 
             if (startTime > new Date()) {
@@ -109,10 +128,11 @@ function getStartTime() {
 
 function getEndTime() {
     self.Lottery.endTime.call(function(error, result) {
-        if (error)
-            console.log("Error");
-        else {
-            console.log("There was a result");
+        if (error) {
+            console.log("Lottery.endTime fail");
+            console.log(error);
+        } else {
+            console.log("Lottery.endTime success");
             var endTime = new Date(result*1000);
             updateUI('countdown_text','Ending')
             initializeClock('clockdiv', endTime);
@@ -125,11 +145,15 @@ function updateUI(docElementId, html)  {
 }
 
 function weiCost() {
-    return parseInt(parseFloat($("#num-tickets").val()) * self.weiRate);
-}
+    var numTickets = parseInt($("#num-tickets").val());
+    if (numTickets < 1) {
+        numTickets = 1;
+    }
 
-function updateCost() {
-    updateUI('wei_cost',  weiCost());
+    if (!isNaN(numTickets)) {
+        $("#num-tickets").val(numTickets);
+    }
+    return parseInt(numTickets * self.weiRate);
 }
 
 function buyClicked() {
@@ -137,12 +161,16 @@ function buyClicked() {
 
     self.Lottery.buyTokens(self.account, {value: weiCost() }, function(error) {
         if (error) {
+            console.log('Lottery.buyTokens fail');
             console.log(error);
         }
         else {
-            console.log('Bought requested tokens');
-            getWeiRaised();
-            updateAccountBalance();
+            console.log('Lottery.buyTokens success');
+            setTimeout(function() {
+                // Wait for this to be mined for 10 seconds before requesting the value
+                updateAccountBalance();
+                getWeiRaised();
+            }, 10000);
         }
     });
 }
