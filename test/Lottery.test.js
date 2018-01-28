@@ -6,18 +6,19 @@ import EVMRevert from './helpers/EVMRevert';
 
 const BigNumber = web3.BigNumber;
 
-require('chai')
+const should = require('chai')
   .use(require('chai-as-promised'))
   .use(require('chai-bignumber')(BigNumber))
   .should();
 
 const Lottery = artifacts.require('Lottery');
-const LotteryToken = artifacts.require('LotteryToken');
+const MintableToken = artifacts.require('MintableToken');
 
 contract('Lottery', function (accounts) {
   const owner = accounts[0];
   const wallet = accounts[1];
   const investor = accounts[2];
+  const nonInvestor = accounts[3];
 
   const rate = new BigNumber(1000);
   const expectedTokenAmount = 2;
@@ -34,7 +35,7 @@ contract('Lottery', function (accounts) {
     this.afterEndTime = this.endTime + duration.seconds(1);
 
     this.lottery = await Lottery.new(this.startTime, this.endTime, rate, wallet);
-    this.token = LotteryToken.at(await this.lottery.token());
+    this.token = MintableToken.at(await this.lottery.token());
   });
 
   it('should create lottery with correct parameters', async function () {
@@ -79,12 +80,23 @@ contract('Lottery', function (accounts) {
     await this.lottery.runDraw().should.be.rejectedWith(EVMRevert);    
   });
 
-  it('should be able to run draw after the raffle draw and tokens have been purchased', async function () {
+  it('should only be possible for the winning investor to claim prize after the raffle draw is over', async function () {
     await increaseTimeTo(this.startTime);
     await this.lottery.buyTokens(investor, { value: investmentAmount, from: investor }).should.be.fulfilled;
 
     await increaseTimeTo(this.afterEndTime);
-    await this.lottery.runDraw().should.be.fulfilled;
+    await this.lottery.runDraw({from: nonInvestor}).should.be.rejectedWith(EVMRevert);
+    
+    const beforeDraw = web3.eth.getBalance(investor);
+    const { logs } = await this.lottery.runDraw({from: owner});
+
+    const event = logs.find(e => e.event === 'AnnounceWinner');
+    should.exist(event);
+    event.args.winningAddress.should.equal(investor);
+    event.args.prize.should.be.bignumber.equal(investmentAmount);
+
+    const afterDraw = web3.eth.getBalance(investor);
+    afterDraw.minus(beforeDraw).should.be.bignumber.equal(investmentAmount);
   });
 
 });

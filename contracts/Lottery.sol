@@ -19,7 +19,7 @@ contract Lottery is Crowdsale, Ownable {
     event TallyTokens(uint256 numTokensIssued, uint256 numTokens, uint256 secretNumber);
 
     // Event to announce the winner - suppose we do not want to announce the winner in the future
-    event AnnounceWinner(uint256 winnerIndex, address winningAddress);
+    event AnnounceWinner(uint256 winnerIndex, address winningAddress, uint256 prize);
 
     function Lottery(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public
     Crowdsale(_startTime, _endTime, _rate, _wallet)
@@ -54,16 +54,18 @@ contract Lottery is Crowdsale, Ownable {
         token.mint(beneficiary, numTokens);
         TokenPurchase(msg.sender, beneficiary, weiAmount, numTokens);
 
-        forwardFunds();
+        // forwardFunds();
 
         registerAddress(numTokens, beneficiary);
     }
     
-    function runDraw() onlyOwner public {
+    function runDraw() public onlyOwner {
         require(hasEnded() == true);
         require(numTokensIssued > 0);
         uint256 winnerIndex = secretNumber%numTokensIssued;
-        AnnounceWinner(winnerIndex, investorAddresses[winnerIndex]);
+        address winningAddress = investorAddresses[winnerIndex];
+        uint256 prize = this.balance;
+        AnnounceWinner(winnerIndex, winningAddress, prize);
+        winningAddress.transfer(this.balance);
     }
-
 }

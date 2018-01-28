@@ -1,5 +1,3 @@
-
-
 function init() {
     // Checking if Web3 has been injected by the browser (Mist/MetaMask)
     if (typeof web3 !== 'undefined') {
@@ -21,10 +19,10 @@ function init() {
                         }
                     }, 1000);
                     setInterval(function() {
-                        /*  updateAccountBalance and getWeiRaised every minute
+                        /*  updateAccountBalance and updateEthRaised every minute
                             in case tokens are being bought elsewhere */
                         updateAccountBalance();
-                        getWeiRaised();
+                        updateEthRaised();
                     }, 60000);                    
                 }
             });
@@ -36,7 +34,12 @@ function init() {
 }
 
 function updateCost() {
-    updateUI('wei_cost',  weiCost());
+    var eth_cost = weiCost()/10**18;
+    console.log(eth_cost);
+    if (!isNaN(eth_cost)) {
+        var text = 'Buy for ' + eth_cost + ' ETH';
+        $("#btn-buy").val(text);
+    }
 }
 
 function initLottery() {
@@ -46,7 +49,7 @@ function initLottery() {
                         .at(def.networks[self.network_id].address);
 
         getWeiRate();
-        getWeiRaised();
+        updateEthRaised();
         initTime();
         initLotteryToken();
     });
@@ -60,7 +63,7 @@ function initLotteryToken() {
                 console.log(error);
             } else {
                 console.log("Lottery.token success");
-                self.LotteryToken = web3.eth.contract(def['abi']).at(result);
+                self.MintableToken = web3.eth.contract(def['abi']).at(result);
                 updateAccountBalance();
             }
         })
@@ -69,26 +72,25 @@ function initLotteryToken() {
 
 function updateAccountBalance() {
     self.account = web3.eth.accounts[0];
-    self.LotteryToken.balanceOf(self.account,function(error,result){
+    self.MintableToken.balanceOf(self.account,function(error,result){
         if (error){
-            console.log("LotteryToken.balanceOf fail");
+            console.log("MintableToken.balanceOf fail");
             console.log(error);
         } else {
-            console.log("LotteryToken.balanceOf success");
-            updateUI('account',self.account);
-            updateUI('account_balance',result);            
+            console.log("MintableToken.balanceOf success");
+            updateUI('account_balance', self.account + ' owns ' + result + ' tickets.');            
         }
     });
 }
 
-function getWeiRaised() {
+function updateEthRaised() {
     self.Lottery.weiRaised.call(function(error, result) {
         if (error) {
             console.log("Lottery.weiRaised fail");
             console.log(error);
         } else {
             console.log("Lottery.weiRaised success");
-            updateUI('wei_raised', result);
+            updateUI('eth_raised', 'Grand prize of ' + result/10**18 + ' ETH');
         }
     });
 }
@@ -183,7 +185,7 @@ function buyClicked() {
             setTimeout(function() {
                 // Wait for this to be mined for 10 seconds before requesting the value
                 updateAccountBalance();
-                getWeiRaised();
+                updateEthRaised();
             }, 10000);
         }
     });
@@ -192,6 +194,7 @@ function buyClicked() {
 // /**
 //  * Fired on web page load
 //  */
+
 $(function() {
     init();
     
@@ -204,13 +207,11 @@ $(function() {
     });
 })
 
-
-
 // --- BEGINNING OF COUNTDOWN
 // --- obtained from https://codepen.io/SitePoint/pen/MwNPVq
 
-function getTimeRemaining(untilTime, delta) {
-  var t = untilTime - new Date() + delta;
+function getTimeRemaining(untilTime) {
+  var t = untilTime - new Date() + self.delta;
   var seconds = Math.floor((t / 1000) % 60);
   var minutes = Math.floor((t / 1000 / 60) % 60);
   var hours = Math.floor((t / (1000 * 60 * 60)) % 24);
@@ -225,28 +226,29 @@ function getTimeRemaining(untilTime, delta) {
 }
 
 function initializeClock(untilTime) {
-      var clock = document.getElementById('clockdiv');
-      var daysSpan = clock.querySelector('.days');
-      var hoursSpan = clock.querySelector('.hours');
-      var minutesSpan = clock.querySelector('.minutes');
-      var secondsSpan = clock.querySelector('.seconds');
-      var delta = new Date() - self.latestTime
+    var clock = document.getElementById('clockdiv');
+    var daysSpan = clock.querySelector('.days');
+    var hoursSpan = clock.querySelector('.hours');
+    var minutesSpan = clock.querySelector('.minutes');
+    var secondsSpan = clock.querySelector('.seconds');
+    self.delta = new Date() - self.latestTime
 
-      function updateClock() {
-        var t = getTimeRemaining(untilTime, delta);
+    function updateClock() {
+        var t = getTimeRemaining(untilTime);
 
-        daysSpan.innerHTML = t.days;
-        hoursSpan.innerHTML = ('0' + t.hours).slice(-2);
-        minutesSpan.innerHTML = ('0' + t.minutes).slice(-2);
-        secondsSpan.innerHTML = ('0' + t.seconds).slice(-2);
+        console.log(t.total)
 
-        if (t.total <= 0) {
-          clearInterval(timeInterval);
+        if (t.total < 0) {
+            clearInterval(timeInterval);
+        } else {
+            daysSpan.innerHTML = t.days;
+            hoursSpan.innerHTML = ('0' + t.hours).slice(-2);
+            minutesSpan.innerHTML = ('0' + t.minutes).slice(-2);
+            secondsSpan.innerHTML = ('0' + t.seconds).slice(-2);
         }
-      }
+    }
 
-      updateClock();
-      var timeInterval = setInterval(updateClock, 1000);
+    var timeInterval = setInterval(updateClock, 1000);
 }
 
 // ---- END OF COUNTDOWN
