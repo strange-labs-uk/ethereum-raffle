@@ -78,7 +78,7 @@ function updateAccountBalance() {
             console.log(error);
         } else {
             console.log("MintableToken.balanceOf success");
-            updateUI('account_balance', self.account + ' owns ' + result + ' tickets.');            
+            updateUI('account_balance', 'You (' + self.account + ') own ' + result + ' tickets.');            
         }
     });
 }
@@ -175,7 +175,7 @@ function weiCost() {
 function buyClicked() {
     var numTokens = parseInt($("#num-tickets").val());
 
-    self.Lottery.buyTokens(self.account, {value: weiCost() }, function(error) {
+    self.Lottery.buyTokens(self.account, self.entropy, {value: weiCost() }, function(error) {
         if (error) {
             console.log('Lottery.buyTokens fail');
             console.log(error);
@@ -191,12 +191,23 @@ function buyClicked() {
     });
 }
 
+function generateEntropy(){
+    var randomValues = new Uint32Array(4);
+    window.crypto.getRandomValues(randomValues);
+    self.entropy = randomValues.join('');
+    $('#entropy').text(self.entropy);
+}
+
 // /**
 //  * Fired on web page load
 //  */
 
 $(function() {
     init();
+
+    $(document).bind("mousemove", function() { 
+        generateEntropy();
+    });
     
     $('#btn-buy').click(function() {
         buyClicked();

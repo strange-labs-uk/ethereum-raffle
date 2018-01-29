@@ -16,7 +16,7 @@ body{
 h1{
   color: #396;
   font-weight: 100;
-  margin: 20px 0px 10px;
+  margin: 10px 0px 10px;
 }
 
 h2{
@@ -54,6 +54,6 @@ h2{
 }
 
 .row{
-	padding-top: 10px;
-	padding-bottom: 10px;
+	padding-top: 5px;
+	padding-bottom: 5px;
 }

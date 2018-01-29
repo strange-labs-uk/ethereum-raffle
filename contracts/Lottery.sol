@@ -13,13 +13,13 @@ contract Lottery is Crowdsale, Ownable {
 
     address[] public investorAddresses;
     uint256 public numTokensIssued;    
-    uint256 private secretNumber;
+    uint256 internal secretNumber;
 
     // DO NOT BROADCAST secretNumber IN THE PRODUCTION CONTRACT
-    event TallyTokens(uint256 numTokensIssued, uint256 numTokens, uint256 secretNumber);
+    event TallyTokens(uint256 numTokensIssued, uint256 numTokens, uint256 entropy);
 
     // Event to announce the winner - suppose we do not want to announce the winner in the future
-    event AnnounceWinner(uint256 winnerIndex, address winningAddress, uint256 prize);
+    event AnnounceWinner(uint256 secretNumber, uint256 numTokensIssued, uint256 winningIndex, address winningAddress, uint256 winningPrize);
 
     function Lottery(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public
     Crowdsale(_startTime, _endTime, _rate, _wallet)
@@ -27,19 +27,20 @@ contract Lottery is Crowdsale, Ownable {
     {
     }
 
-    function registerAddress(uint256 numTokens, address beneficiary) private {
+    function registerAddress(uint256 numTokens, address beneficiary, uint256 entropy) internal {
         for (uint256 i = 0; i < numTokens; i ++) {
             investorAddresses.push(beneficiary);
-            secretNumber += uint256(beneficiary);
         }
+
+        secretNumber += entropy;
         numTokensIssued = investorAddresses.length;
 
-        // DO NOT BROADCAST secretNumber IN THE PRODUCTION CONTRACT
-        TallyTokens(numTokensIssued, numTokens, secretNumber);
+        // DO NOT BROADCAST entropy IN THE PRODUCTION CONTRACT
+        TallyTokens(numTokensIssued, numTokens, entropy);
     }
 
     // low level token purchase function
-    function buyTokens(address beneficiary) public payable {
+    function buyTokens(address beneficiary, uint256 entropy) public payable {
         require(beneficiary != address(0));
         require(validPurchase());
 
@@ -54,18 +55,18 @@ contract Lottery is Crowdsale, Ownable {
         token.mint(beneficiary, numTokens);
         TokenPurchase(msg.sender, beneficiary, weiAmount, numTokens);
 
-        // forwardFunds();
+        registerAddress(numTokens, beneficiary, entropy);
 
-        registerAddress(numTokens, beneficiary);
+        // forwardFunds();
     }
     
     function runDraw() public onlyOwner {
         require(hasEnded() == true);
         require(numTokensIssued > 0);
-        uint256 winnerIndex = secretNumber%numTokensIssued;
-        address winningAddress = investorAddresses[winnerIndex];
-        uint256 prize = this.balance;
-        AnnounceWinner(winnerIndex, winningAddress, prize);
-        winningAddress.transfer(this.balance);
+        uint256 winningIndex = secretNumber%numTokensIssued;
+        address winningAddress = investorAddresses[winningIndex];
+        uint256 winningPrize = this.balance;
+        AnnounceWinner(secretNumber, numTokensIssued, winningIndex, winningAddress, winningPrize);
+        winningAddress.transfer(winningPrize);
     }
 }
