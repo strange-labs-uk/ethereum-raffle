@@ -10,7 +10,13 @@ module.exports = {
       host: 'localhost',
       port: 8545,
       network_id: "*",
-      gas:4600000,
+      gas:4712388,
+    },
+    ropsten: {
+      host: 'localhost',
+      port: 8545,
+      network_id: 3,
+      gas: 4712388
     }
   }
 };
