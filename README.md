@@ -45,3 +45,51 @@ Then browse to http://localhost:3000.
 If you make changes to the contract that you want to propagate to the web interface, reset your deployed contract on the `truffle(develop)>` console and refresh the web page:
     
     deploy --reset
+
+
+
+## second phase design
+
+Overall code for contract:
+
+```
+
+Lottery {
+
+  price int  
+  tickets [address]
+  string secretKeyHash
+  date start
+  date end
+
+  constructor(secretKeyHash, ticketPrice, start, end) {
+    this.secretKeyHash = secretKeyHash
+    this.ticketPrice = ticketPrice
+    this.start = start
+    this.end = end
+  }
+
+  play(address, amount) {
+    if(this.time > this.end) return
+    if(this.time < this.start) return
+    ticketsPurchased = amount / price
+    for(var i=0; i<ticketsPurchased; i++) {
+      tickets.push(address)
+    }
+    returnRemainder()
+  }
+
+  draw(secretKey) {
+    if(this.time < this.end) return
+    if(hash(secretKey) != this.secretKeyHash) return
+    numPlayers = this.tickets.length
+    useSecretNumber = combine(lastBlockHash, secretKey)
+    winningIndex = int(useSecretNumber) % numPlayers
+    winningAddress = this.tickets[winningIndex]
+  }
+
+
+}
+
+```
+
