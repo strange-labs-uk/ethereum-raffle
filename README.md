@@ -61,6 +61,7 @@ Lottery {
   string secretKeyHash
   date start
   date end
+  refunded bool
 
   constructor(secretKeyHash, ticketPrice, start, end) {
     this.secretKeyHash = secretKeyHash
@@ -73,6 +74,7 @@ Lottery {
     if(this.time > this.end) return
     if(this.time < this.start) return
     ticketsPurchased = amount / price
+    if(ticketsPurchased < 1) return
     for(var i=0; i<ticketsPurchased; i++) {
       tickets.push(address)
     }
@@ -80,12 +82,22 @@ Lottery {
   }
 
   draw(secretKey) {
+    if(!owner) return
     if(this.time < this.end) return
     if(hash(secretKey) != this.secretKeyHash) return
     numPlayers = this.tickets.length
-    useSecretNumber = combine(lastBlockHash, secretKey)
+    useSecretNumber = combine(lastBlockHash, secretKey, numPlayers)
     winningIndex = int(useSecretNumber) % numPlayers
     winningAddress = this.tickets[winningIndex]
+  }
+
+  refund() {
+    if(this.time < this.end + 1 day) return
+    if(this.refunded) return
+    for(var i=0; i<this.tickets.length; i++) {
+      pay(this.tickets[i], this.price)
+    }
+    this.refunded = true
   }
 
 
