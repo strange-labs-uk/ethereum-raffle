@@ -2,7 +2,7 @@ pragma solidity ^0.4.18;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
-contract Lottery is Ownable {
+contract HashKeyLottery is Ownable {
 
     /**
      * @dev A single instance of a lottery game - accumulating an array of
@@ -35,7 +35,7 @@ contract Lottery is Ownable {
     mapping (uint => mapping (address => uint)) balances;
     mapping (uint => address[]) tickets;
 
-    function Lottery() public Ownable() {
+    function HashKeyLottery() public Ownable() {
 
     }
 
