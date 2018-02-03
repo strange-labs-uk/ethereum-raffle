@@ -4,6 +4,7 @@ import { increaseTimeTo, duration } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import EVMRevert from './helpers/EVMRevert';
 import crypto from 'crypto';
+import { expect } from 'chai'
 
 const getHash = (st) => crypto.createHash('sha256').update(st).digest('base64')
 
@@ -15,6 +16,20 @@ const should = require('chai')
   .should();
 
 const HashKeyLottery = artifacts.require('HashKeyLottery');
+
+const convertGameData = (arr) => {
+  return {
+    count: arr[0].toNumber(),
+    price: arr[1].toNumber(),
+    feePercent: arr[2].toNumber(),
+    secretKeyHash: arr[3],
+    start: arr[4].toNumber(),
+    end: arr[5].toNumber(),
+    complete: arr[6].toNumber(),
+    refunded: arr[7],
+    refundComplete: arr[8],
+  }
+}
 
 contract('HashKeyLottery', function (accounts) {
   
@@ -41,12 +56,13 @@ contract('HashKeyLottery', function (accounts) {
 
   const newGame = (t, props = {}) => {
 
-    const price = props.price || 1
-    const fees = props.fees || 10
+    const price = props.price === undefined ? 5 : props.price
+    const fees = props.fees === undefined ? 10 : props.fees
     const secret = props.secret || 'apples'
     const start = props.start || t.startTime
     const end = props.end || t.endTime
     const account = props.account || accounts[0]
+    const gas = props.gas || "2200000"
 
     return t.lottery.newGame(
       price,
@@ -54,7 +70,7 @@ contract('HashKeyLottery', function (accounts) {
       getHash(secret),
       start,
       end,
-      { from: account }
+      { from: account, gas }
     )
   }
 
@@ -82,35 +98,99 @@ contract('HashKeyLottery', function (accounts) {
     }).should.be.rejectedWith(EVMRevert);
   });
 
-  it('should create a game with defaults', async function () {
-    await newGame(this, {
-      account: accounts[0]
-    }).should.be.fulfilled;
-  });
-  
   it('should deny a start time in the past', async function () {
     await newGame(this, {
-      account: accounts[0],
       start: latestTime() - duration.weeks(1),
     }).should.be.rejectedWith(EVMRevert);
   });
 
   it('should deny an end time before a start time', async function () {
-    await newGame(this, {
-      account: accounts[0],
+    await newGame(this, {      
       end: this.startTime - duration.weeks(1),
     }).should.be.rejectedWith(EVMRevert);
+  });
+
+  it('should deny an empty price', async function () {
+    await newGame(this, {      
+      price: 0,
+    }).should.be.rejectedWith(EVMRevert);
+  });
+
+  it('should deny 100% fees', async function () {
+    await newGame(this, {
+      fees: 100,
+    }).should.be.rejectedWith(EVMRevert);
+  });
+
+  it('should create a game with defaults', async function () {
+    await newGame(this, {}).should.be.fulfilled;
+
+    (await this.lottery.currentGameId()).toNumber().should.equal(1);
+
+    const defaultGame = convertGameData(await this.lottery.getGame(1))
+
+    expect(defaultGame).to.deep.equal({
+      count: 1,
+      price: 5,
+      feePercent: 10,
+      secretKeyHash: getHash('apples'),
+      start: this.startTime,
+      end: this.endTime,
+      complete: 0,
+      refunded: false,
+      refundComplete: false,
+    })
+    
+  });
+
+  it('should deny a new game when an existing one has not started', async function () {
+    await newGame(this, {}).should.be.fulfilled;
+    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
+  });
+
+  it('should deny a new game when an existing one has started but not finished', async function () {
+    await newGame(this, {}).should.be.fulfilled;
+    await increaseTimeTo(this.startTime + duration.hours(1));
+    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
   });
 
   it('should not let someone play where there is no game', async function () {
     await this.lottery.play({
       value: 10,
-      from: accounts[1]
+      from: accounts[1],
     }).should.be.rejectedWith(EVMRevert);
   });
 
+
 /*
 
+
+  it('should create a game with defaults', async function () {
+    await newGame(this, {
+      account: accounts[0],
+      price: 2,
+      fees: 40,
+    }).should.be.fulfilled;
+
+    await newGame(this, {
+      account: accounts[0],
+      price: 20,
+      fees: 40,
+    }).should.be.fulfilled;
+
+    const gameCount = await this.lottery.currentGameId()
+
+    const game1 = await this.lottery.getGame(1)
+    const game2 = await this.lottery.getGame(2)
+    
+    console.log('-------------------------------------------');
+    console.log('-------------------------------------------');
+    console.dir(gameCount.toNumber())
+    console.dir(convertGameData(game1))
+    console.dir(convertGameData(game2))
+    
+    
+  });
 
 
 
