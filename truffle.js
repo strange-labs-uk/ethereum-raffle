@@ -18,5 +18,8 @@ module.exports = {
       network_id: 3,
       gas: 4712388
     }
+  },
+  mocha: {
+    useColors: false
   }
 };
