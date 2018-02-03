@@ -44,7 +44,7 @@ function updateCost() {
 
 function initLottery() {
     $.getJSON("/ws/Lottery.json", function(def) {
-        // Retrieved the truffle contract definition from the web server
+        // Retrieve the contract from the local geth node
         self.Lottery = web3.eth.contract(def['abi'])
                         .at(def.networks[self.network_id].address);
 
