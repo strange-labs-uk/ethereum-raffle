@@ -56,7 +56,7 @@ Overall code for contract:
 
 Lottery {
 
-  price int  
+  price int
   tickets [address]
   string secretKeyHash
   date start
