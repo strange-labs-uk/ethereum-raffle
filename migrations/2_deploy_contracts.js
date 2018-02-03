@@ -1,4 +1,5 @@
 var Lottery = artifacts.require("./Lottery.sol");
+var HashKeyLottery = artifacts.require("./HashKeyLottery.sol");
 
 module.exports = function(deployer) {
   var startTime = web3.eth.getBlock('latest').timestamp
@@ -7,4 +8,5 @@ module.exports = function(deployer) {
   const rate = new web3.BigNumber(10**17)
   const wallet = web3.eth.accounts[1]
   deployer.deploy(Lottery, startTime, endTime, rate, wallet);
+  deployer.deploy(HashKeyLottery);
 };
