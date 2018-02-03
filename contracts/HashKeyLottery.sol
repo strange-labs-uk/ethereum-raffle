@@ -2,7 +2,7 @@ pragma solidity ^0.4.18;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
-contract Lottery is Ownable {
+contract HashKeyLottery is Ownable {
 
     /**
      * @dev A single instance of a lottery game - accumulating an array of
@@ -32,10 +32,12 @@ contract Lottery is Ownable {
 
     // the core state database of id -> game
     mapping (uint => Game) games;
+    // keeps the current balance for each game for refunds
     mapping (uint => mapping (address => uint)) balances;
+    // the ticket list for each game
     mapping (uint => address[]) tickets;
 
-    function Lottery() public Ownable() {
+    function HashKeyLottery() public Ownable() {
 
     }
 
@@ -86,6 +88,12 @@ contract Lottery is Ownable {
       Game storage g = games[currentGameId];
       isRefunding = g.refunded && !g.refundComplete;
     }
+
+    /*
+    
+      PUBLIC METHODS
+      
+    */
 
     /**
      * @dev create a new game with the given config
