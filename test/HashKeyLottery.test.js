@@ -6,7 +6,7 @@ import EVMRevert from './helpers/EVMRevert';
 import crypto from 'crypto';
 import { expect } from 'chai'
 
-require('events').EventEmitter.prototype._maxListeners = 100;
+require('events').EventEmitter.prototype._maxListeners = 1000;
 
 const getHash = (st) => crypto.createHash('sha256').update(st).digest('base64')
 
@@ -65,15 +65,15 @@ contract('HashKeyLottery', function (accounts) {
     const end = props.end || t.endTime
     const drawPeriod = props.drawPeriod || t.drawPeriod
     const account = props.account || accounts[0]
-    const gas = props.gas || "2200000"
+    const gas = props.gas || "4200000"
 
     return t.lottery.newGame(
       price,
-      fees,
       getHash(secret),
+      drawPeriod,
       start,
       end,
-      drawPeriod,
+      fees,      
       { from: account, gas }
     )
   }
@@ -129,13 +129,19 @@ contract('HashKeyLottery', function (accounts) {
     }).should.be.rejectedWith(EVMRevert);
   });
 
+  it('should deny a drawPeriod longer than a week', async function () {
+    await newGame(this, {
+      drawPeriod: (duration.weeks(1) + duration.days(1)),
+    }).should.be.rejectedWith(EVMRevert);
+  });
+
   it('should create a game with defaults', async function () {
     await newGame(this, {}).should.be.fulfilled;
 
     (await this.lottery.currentGameIndex()).toNumber().should.equal(1);
 
     const defaultGame = convertGameData(await this.lottery.getGame(1))
-    
+
     expect(defaultGame).to.deep.equal({
       index: 1,
       price: 1,
@@ -144,7 +150,7 @@ contract('HashKeyLottery', function (accounts) {
       start: this.startTime,
       end: this.endTime,
       complete: 0,
-      drawPeriod: (60 * 60 * 24),
+      drawPeriod: this.drawPeriod,
       refunded: false,
     })
     
@@ -218,15 +224,16 @@ contract('HashKeyLottery', function (accounts) {
       from: accounts[3],
       value: 3
     }).should.be.fulfilled;
+    (await this.lottery.currentGameIndex()).toNumber().should.equal(1);
   });
 
 
 
 
+
+
+
 /*
-
-
-
 
 
 
