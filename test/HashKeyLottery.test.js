@@ -83,6 +83,7 @@ contract('HashKeyLottery', function (accounts) {
     this.startTime = latestTime() + duration.weeks(1);
     this.endTime = this.startTime + duration.weeks(1);
     this.afterEndTime = this.endTime + duration.seconds(1);
+    this.afterRefundTime = this.endTime + duration.weeks(1);
     this.lottery = await HashKeyLottery.new();
   });
 
@@ -154,6 +155,21 @@ contract('HashKeyLottery', function (accounts) {
     await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
   });
 
+  it('should deny a new game when an existing has finished but not complete', async function () {
+    await newGame(this, {}).should.be.fulfilled;
+    await increaseTimeTo(this.afterEndTime);
+    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
+  });
+
+  it('should deny a new game when an existing is being refunded', async function () {
+    await newGame(this, {}).should.be.fulfilled;
+    await increaseTimeTo(this.afterRefundTime);
+    await this.lottery.refund({
+      from: accounts[1]
+    }).should.be.fulfilled;
+    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
+  });
+
   it('should not let someone play where there is no game', async function () {
     await this.lottery.play({
       value: 10,
@@ -161,6 +177,32 @@ contract('HashKeyLottery', function (accounts) {
     }).should.be.rejectedWith(EVMRevert);
   });
 
+  it('should not allow play before the game has started', async function () {
+    await newGame(this, {}).should.be.fulfilled;
+    await increaseTimeTo(this.startTime - duration.seconds(1));
+    await this.lottery.play({
+      from: accounts[1],
+      value: 10
+    }).should.be.rejectedWith(EVMRevert);
+  });
+
+  it('should not allow play once the game has ended', async function () {
+    await newGame(this, {}).should.be.fulfilled;
+    await increaseTimeTo(this.endTime + duration.seconds(1));
+    await this.lottery.play({
+      from: accounts[1],
+      value: 10
+    }).should.be.rejectedWith(EVMRevert);
+  });
+
+  it('should not allow play once the game has ended', async function () {
+    await newGame(this, {}).should.be.fulfilled;
+    await increaseTimeTo(this.endTime + duration.seconds(1));
+    await this.lottery.play({
+      from: accounts[1],
+      value: 10
+    }).should.be.rejectedWith(EVMRevert);
+  });
 
 /*
 

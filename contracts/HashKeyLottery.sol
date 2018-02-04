@@ -87,7 +87,7 @@ contract HashKeyLottery is Ownable {
   function isGameBeingRefunded() private view returns (bool) {
     require(currentGameId > 0);
     Game storage g = games[currentGameId];
-    return g.refunded && !g.refundComplete;
+    return g.complete > 0 && g.refunded && !g.refundComplete;
   }
 
   /*
@@ -192,31 +192,36 @@ contract HashKeyLottery is Ownable {
 
     // pick the winning index using modulus numTickets
     uint numTickets = tickets[currentGameId].length;
-    uint winningIndex = finalNumber % numTickets;
-    address winningAddress = tickets[currentGameId][winningIndex];
-    uint totalPot = g.price * numTickets;
-    uint feeAmount = 0;
-    uint winningAmount = totalPot;
 
-    // if there are fees to pay then calculate them
-    if(g.feePercent > 0) {
-      feeAmount = (totalPot / 100) * g.feePercent;
-      winningAmount = totalPot - feeAmount;
-    }
-    
-    // update the state of the game
     g.complete = block.timestamp;
-    g.winner = winningAddress;
-    g.prizePaid = winningAmount;
-    g.feesPaid = feeAmount;
-    g.secretKey = _secretKey;
 
-    // send the prize
-    winningAddress.transfer(winningAmount);
+    if(numTickets > 0) {
+      uint winningIndex = finalNumber % numTickets;
+      address winningAddress = tickets[currentGameId][winningIndex];
+      uint totalPot = g.price * numTickets;
+      uint feeAmount = 0;
+      uint winningAmount = totalPot;
 
-    // send the fees
-    if(feeAmount > 0) {
-      owner.transfer(feeAmount);  
+      // if there are fees to pay then calculate them
+      if(g.feePercent > 0) {
+        feeAmount = (totalPot / 100) * g.feePercent;
+        winningAmount = totalPot - feeAmount;
+      }
+      
+      // update the state of the game
+      g.complete = block.timestamp;
+      g.winner = winningAddress;
+      g.prizePaid = winningAmount;
+      g.feesPaid = feeAmount;
+      g.secretKey = _secretKey;
+
+      // send the prize
+      winningAddress.transfer(winningAmount);
+
+      // send the fees
+      if(feeAmount > 0) {
+        owner.transfer(feeAmount);  
+      }
     }
   }
 
