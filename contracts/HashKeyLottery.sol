@@ -144,7 +144,7 @@ contract HashKeyLottery is Ownable {
    * @dev verify the given key unlocks the current game
    * @return bool
    */
-  function verifySecretKey(uint gameId, bytes32 _secretKey) private view returns (bool) {
+  function verifySecretKey(uint gameId, string _secretKey) private view returns (bool) {
     require(gameId > 0);
     GameSecurity storage security = games[gameId].security;
     bytes32 givenHash = sha256(_secretKey);
@@ -278,14 +278,15 @@ contract HashKeyLottery is Ownable {
    * @dev the function called by the owner to choose a winner
    * @return uint256 the number of tickets purchased
    */
-  function draw(bytes32 _secretKey)
+  function draw(string _secretKey)
     public
+    view
     onlyOwner
     hasGame()
     canDrawGame()
   {
     GameSettings storage settings = games[currentGameIndex].settings;
-    GameResults storage results = games[currentGameIndex].results;
+    //GameResults storage results = games[currentGameIndex].results;
 
     // we want at least 2 minutes between the game ending and the draw
     // being called - this is to stop miners being able to use the secret_key
@@ -293,8 +294,8 @@ contract HashKeyLottery is Ownable {
     require(block.timestamp > settings.end + END_BUFFER);
 
     // the _secretKey must line up with the originally submitted hash      
-    require(verifySecretKey(currentGameIndex, _secretKey));
-
+    //require(verifySecretKey(currentGameIndex, _secretKey));
+/*
     uint256 finalNumber = getDrawNumber(currentGameIndex, _secretKey);
     address[] memory drawAddresses = getTickets(currentGameIndex);
     // pick the winning index using modulus numTickets
@@ -330,6 +331,7 @@ contract HashKeyLottery is Ownable {
         owner.transfer(feeAmount);
       }
     }
+    */
   }
 
   /**

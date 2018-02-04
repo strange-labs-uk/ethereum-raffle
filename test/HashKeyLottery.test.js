@@ -70,7 +70,7 @@ contract('HashKeyLottery', function (accounts) {
 
     const price = props.price === undefined ? 1 : props.price
     const fees = props.fees === undefined ? 10 : props.fees
-    const secret = props.secret || 'apples'
+    const secret = props.secret || t.secret || 'apples'
     const start = props.start || t.startTime
     const end = props.end || t.endTime
     const drawPeriod = props.drawPeriod || t.drawPeriod
@@ -120,9 +120,10 @@ contract('HashKeyLottery', function (accounts) {
     this.afterRefundTime = this.endTime + duration.weeks(1);
     this.drawPeriod = duration.days(1);
     this.lottery = await HashKeyLottery.new();
+    this.secret = 'apples'
   });
 
-
+/*
   it('should create the contract and be owned by account0', async function () {
     this.lottery.should.exist;
     const owner = await this.lottery.owner()
@@ -285,6 +286,21 @@ contract('HashKeyLottery', function (accounts) {
 
     // 1 for player 1, 2 for player 2, 3 for player 3
     drawLength.should.equal(6);
+  });
+*/
+  it('should reject a draw before the end', async function () {
+    await addThreePlayers(this)
+    await this.lottery.draw(this.secret, {
+      from: accounts[0],
+    }).should.be.rejectedWith(EVMRevert);
+  });
+
+  it('should accept a draw', async function () {
+    await addThreePlayers(this)
+    await increaseTimeTo(this.endTime + duration.hours(1));
+    await this.lottery.draw(this.secret, {
+      from: accounts[0],
+    }).should.be.fulfilled;
   });
 
 
