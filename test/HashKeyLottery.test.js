@@ -6,6 +6,8 @@ import EVMRevert from './helpers/EVMRevert';
 import crypto from 'crypto';
 import { expect } from 'chai'
 
+require('events').EventEmitter.prototype._maxListeners = 100;
+
 const getHash = (st) => crypto.createHash('sha256').update(st).digest('base64')
 
 const BigNumber = web3.BigNumber;
@@ -19,15 +21,15 @@ const HashKeyLottery = artifacts.require('HashKeyLottery');
 
 const convertGameData = (arr) => {
   return {
-    count: arr[0].toNumber(),
+    index: arr[0].toNumber(),
     price: arr[1].toNumber(),
     feePercent: arr[2].toNumber(),
     secretKeyHash: arr[3],
     start: arr[4].toNumber(),
     end: arr[5].toNumber(),
     complete: arr[6].toNumber(),
-    refunded: arr[7],
-    refundComplete: arr[8],
+    drawPeriod: arr[7].toNumber(),
+    refunded: arr[8],
   }
 }
 
@@ -56,11 +58,12 @@ contract('HashKeyLottery', function (accounts) {
 
   const newGame = (t, props = {}) => {
 
-    const price = props.price === undefined ? 5 : props.price
+    const price = props.price === undefined ? 1 : props.price
     const fees = props.fees === undefined ? 10 : props.fees
     const secret = props.secret || 'apples'
     const start = props.start || t.startTime
     const end = props.end || t.endTime
+    const drawPeriod = props.drawPeriod || t.drawPeriod
     const account = props.account || accounts[0]
     const gas = props.gas || "2200000"
 
@@ -70,6 +73,7 @@ contract('HashKeyLottery', function (accounts) {
       getHash(secret),
       start,
       end,
+      drawPeriod,
       { from: account, gas }
     )
   }
@@ -84,6 +88,7 @@ contract('HashKeyLottery', function (accounts) {
     this.endTime = this.startTime + duration.weeks(1);
     this.afterEndTime = this.endTime + duration.seconds(1);
     this.afterRefundTime = this.endTime + duration.weeks(1);
+    this.drawPeriod = duration.days(1);
     this.lottery = await HashKeyLottery.new();
   });
 
@@ -92,6 +97,7 @@ contract('HashKeyLottery', function (accounts) {
     const owner = await this.lottery.owner()
     owner.should.equal(accounts[0])
   });
+
 
   it('should deny a non-owner to create a game', async function () {
     await newGame(this, {
@@ -126,25 +132,31 @@ contract('HashKeyLottery', function (accounts) {
   it('should create a game with defaults', async function () {
     await newGame(this, {}).should.be.fulfilled;
 
-    (await this.lottery.currentGameId()).toNumber().should.equal(1);
+    (await this.lottery.currentGameIndex()).toNumber().should.equal(1);
 
     const defaultGame = convertGameData(await this.lottery.getGame(1))
+    console.log('-------------------------------------------');
+    console.log('-------------------------------------------');
+    console.dir(defaultGame)
 
     expect(defaultGame).to.deep.equal({
-      count: 1,
-      price: 5,
+      index: 1,
+      price: 1,
       feePercent: 10,
       secretKeyHash: getHash('apples'),
       start: this.startTime,
       end: this.endTime,
       complete: 0,
+      drawPeriod: (60 * 60 * 24),
       refunded: false,
-      refundComplete: false,
     })
     
   });
 
-  it('should deny a new game when an existing one has not started', async function () {
+/*
+
+
+  it('should deny a new game when an existing one exists but has not started', async function () {
     await newGame(this, {}).should.be.fulfilled;
     await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
   });
@@ -204,7 +216,45 @@ contract('HashKeyLottery', function (accounts) {
     }).should.be.rejectedWith(EVMRevert);
   });
 
-/*
+  it('should play normally with 3 players', async function () {
+    await newGame(this, {}).should.be.fulfilled;
+    await increaseTimeTo(this.startTime + duration.hours(1));
+    await this.lottery.play({
+      from: accounts[1],
+      value: 1
+    }).should.be.fulfilled;
+    await increaseTimeTo(this.startTime + duration.hours(2));
+    await this.lottery.play({
+      from: accounts[2],
+      value: 2
+    }).should.be.fulfilled;
+    await increaseTimeTo(this.startTime + duration.hours(3));
+    await this.lottery.play({
+      from: accounts[3],
+      value: 3
+    }).should.be.fulfilled;
+  });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   it('should create a game with defaults', async function () {
