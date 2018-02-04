@@ -123,7 +123,6 @@ contract('HashKeyLottery', function (accounts) {
     this.secret = 'apples'
   });
 
-/*
   it('should create the contract and be owned by account0', async function () {
     this.lottery.should.exist;
     const owner = await this.lottery.owner()
@@ -278,6 +277,10 @@ contract('HashKeyLottery', function (accounts) {
     tickets.should.deep.equal(checkTickets)
   });
 
+
+
+/*
+
   it('should get the draw length', async function () {
     await addThreePlayers(this)
 
@@ -287,7 +290,7 @@ contract('HashKeyLottery', function (accounts) {
     // 1 for player 1, 2 for player 2, 3 for player 3
     drawLength.should.equal(6);
   });
-*/
+
   it('should reject a draw before the end', async function () {
     await addThreePlayers(this)
     await this.lottery.draw(this.secret, {
@@ -301,10 +304,11 @@ contract('HashKeyLottery', function (accounts) {
     await this.lottery.draw(this.secret, {
       from: accounts[0],
     }).should.be.fulfilled;
+
+    const gameData = convertGameData(await this.lottery.getGame(1))
+    console.log(JSON.stringify(gameData, null, 4))
   });
 
-
-/*
 
 
 

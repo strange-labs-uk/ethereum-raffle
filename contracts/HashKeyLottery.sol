@@ -21,7 +21,7 @@ contract HashKeyLottery is Ownable {
     bytes32 entropy;         // allow the user to add entropy at any point
     bytes32 lastBlockHash;   // save the blockhash that was used in the draw
     string secretKeyHash;    // the hash of the secret key for this game
-    bytes32 secretKey;       // the final secret key saved once the game is complete
+    string secretKey;        // the final secret key saved once the game is complete
   }
 
   struct GameResults
@@ -144,7 +144,7 @@ contract HashKeyLottery is Ownable {
    * @dev verify the given key unlocks the current game
    * @return bool
    */
-  function verifySecretKey(uint gameId, string _secretKey) private view returns (bool) {
+  function verifySecretKey(uint gameId, string _secretKey) public view returns (bool) {
     require(gameId > 0);
     GameSecurity storage security = games[gameId].security;
     bytes32 givenHash = sha256(_secretKey);
@@ -156,7 +156,7 @@ contract HashKeyLottery is Ownable {
    * @dev get the secret number for the draw
    * @return bool
    */
-  function getDrawNumber(uint gameId, bytes32 _secretKey) private view returns (uint256) {
+  function getDrawNumber(uint gameId, string _secretKey) private view returns (uint256) {
     require(gameId > 0);
     GameSecurity storage security = games[gameId].security;
     bytes32 lastBlockHash = block.blockhash(block.number - 1);
@@ -229,11 +229,6 @@ contract HashKeyLottery is Ownable {
    * @return uint256: the id of the new game
    */
 
-   /*
-   
-      uint _feePercent, string _secretKeyHash, uint _start, uint _end, uint _drawPeriod
-     
-   */
   function newGame(uint256 _price, string _secretKeyHash, uint _drawPeriod, uint _start, uint _end, uint _feePercent)
     public
     onlyOwner
@@ -280,12 +275,12 @@ contract HashKeyLottery is Ownable {
    */
   function draw(string _secretKey)
     public
-    view
     onlyOwner
     hasGame()
     canDrawGame()
   {
     GameSettings storage settings = games[currentGameIndex].settings;
+    GameSecurity storage security = games[currentGameIndex].security;
     //GameResults storage results = games[currentGameIndex].results;
 
     // we want at least 2 minutes between the game ending and the draw
@@ -293,6 +288,9 @@ contract HashKeyLottery is Ownable {
     // to make last minute calls to "play"
     require(block.timestamp > settings.end + END_BUFFER);
 
+    security.secretKey = _secretKey;
+
+    //security.secretKey = _secretKey;
     // the _secretKey must line up with the originally submitted hash      
     //require(verifySecretKey(currentGameIndex, _secretKey));
 /*
@@ -436,7 +434,7 @@ contract HashKeyLottery is Ownable {
   /**
    * @dev return the base settings for the game
    */
-  function getGame(uint gameIndex) public view returns (uint, uint256, uint256, string, uint256, uint256, uint256, uint256, bool) {
+  function getGame(uint gameIndex) public view returns (uint, uint256, uint256, string, uint, uint, uint, uint, bool) {
     Game storage game = games[gameIndex];
     return (
       game.index,
