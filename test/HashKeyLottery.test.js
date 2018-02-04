@@ -33,6 +33,16 @@ const convertGameData = (arr) => {
   }
 }
 
+const convertBalanceData = (data) => {
+  const [ addresses, balances ] = data;
+  return addresses.map((address, i) => {
+    return {
+      address,
+      balance: balances[i].toNumber(),
+    }
+  })
+}
+
 contract('HashKeyLottery', function (accounts) {
   
 /*
@@ -78,6 +88,26 @@ contract('HashKeyLottery', function (accounts) {
     )
   }
 
+  async function addThreePlayers(t) {
+    await newGame(t, {}).should.be.fulfilled;
+    await increaseTimeTo(t.startTime + duration.hours(1));
+    await t.lottery.play({
+      from: accounts[1],
+      value: 1
+    }).should.be.fulfilled;
+    await increaseTimeTo(t.startTime + duration.hours(2));
+    await t.lottery.play({
+      from: accounts[2],
+      value: 2
+    }).should.be.fulfilled;
+    await increaseTimeTo(t.startTime + duration.hours(3));
+    await t.lottery.play({
+      from: accounts[3],
+      value: 3
+    }).should.be.fulfilled;
+    (await t.lottery.currentGameIndex()).toNumber().should.equal(1);
+  }
+
   before(async function () {
     // Advance to the next block to correctly read time in the solidity "now" function interpreted by testrpc
     await advanceBlock();
@@ -91,6 +121,7 @@ contract('HashKeyLottery', function (accounts) {
     this.drawPeriod = duration.days(1);
     this.lottery = await HashKeyLottery.new();
   });
+
 
   it('should create the contract and be owned by account0', async function () {
     this.lottery.should.exist;
@@ -207,36 +238,73 @@ contract('HashKeyLottery', function (accounts) {
     }).should.be.rejectedWith(EVMRevert);
   });
 
+  // vanilla test to check nothing throws up
   it('should play normally with 3 players', async function () {
-    await newGame(this, {}).should.be.fulfilled;
-    await increaseTimeTo(this.startTime + duration.hours(1));
-    await this.lottery.play({
-      from: accounts[1],
-      value: 1
-    }).should.be.fulfilled;
-    await increaseTimeTo(this.startTime + duration.hours(2));
-    await this.lottery.play({
-      from: accounts[2],
-      value: 2
-    }).should.be.fulfilled;
-    await increaseTimeTo(this.startTime + duration.hours(3));
-    await this.lottery.play({
-      from: accounts[3],
-      value: 3
-    }).should.be.fulfilled;
-    (await this.lottery.currentGameIndex()).toNumber().should.equal(1);
+    await addThreePlayers(this)
   });
 
+  it('should get the balance of all players', async function () {
+    await addThreePlayers(this)
 
+    const balances = convertBalanceData(await this.lottery.getBalances(1));
 
+    balances.length.should.equal(3);
 
+    const checkBalance = (index) => {
+      balances[index].balance.should.equal(index+1)
+      balances[index].address.should.equal(accounts[index+1])
+    }
 
+    checkBalance(0)
+    checkBalance(1)
+    checkBalance(2)
+  });
+
+  it('should get the tickets for all players', async function () {
+    await addThreePlayers(this)
+
+    const tickets = await this.lottery.getTickets(1);
+
+    const checkTickets = [
+      accounts[1],
+      accounts[2],
+      accounts[2],
+      accounts[3],
+      accounts[3],
+      accounts[3],
+    ]
+
+    tickets.should.deep.equal(checkTickets)
+  });
+
+  it('should get the draw length', async function () {
+    await addThreePlayers(this)
+
+    let drawLength = await this.lottery.getDrawLength(1);
+    drawLength = drawLength.toNumber()
+
+    // 1 for player 1, 2 for player 2, 3 for player 3
+    drawLength.should.equal(6);
+  });
 
 
 /*
 
 
 
+
+
+  it('should get the balance of all players', async function () {
+    await addThreePlayers(this)
+
+    const balances = convertBalanceData(await this.lottery.getBalances(1));
+    const tickets = await this.lottery.getTickets(1);
+
+    console.log('-------------------------------------------');
+    console.log('-------------------------------------------');
+    console.dir(balances)
+    console.dir(tickets)
+  });
 
 
 

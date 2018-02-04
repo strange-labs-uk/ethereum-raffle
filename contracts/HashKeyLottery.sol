@@ -35,7 +35,7 @@ contract HashKeyLottery is Ownable {
   struct GameEntries
   {
     // the balance of each player - used for refunds
-    mapping (address => uint) balances;
+    mapping (address => uint256) balances;
     // unique list of all entrants that have a balance
     address[] players;
   }
@@ -164,22 +164,6 @@ contract HashKeyLottery is Ownable {
     return uint256(randomHash);
   }
 
-  /**
-   * @dev get a flat array of addresses for the draw
-   * @return address[]
-   */
-  function getDrawAddresses(uint gameId) private view returns (address[] addressArray) {
-    require(gameId > 0);
-    GameEntries storage entries = games[gameId].entries;
-    uint256 retIndex = 0;
-    for(uint256 i=0; i<entries.players.length; i++) {
-      var playerAddress = entries.players[i];
-      for(uint256 j=0; j<entries.balances[playerAddress]; j++) {
-        addressArray[retIndex++] = playerAddress;
-      }
-    }
-  }
-
   /*
   
     MODIFIERS
@@ -235,7 +219,7 @@ contract HashKeyLottery is Ownable {
 
   /*
   
-    PUBLIC METHODS
+    OWNER STATE CHANGING METHODS
     
   */
 
@@ -291,43 +275,6 @@ contract HashKeyLottery is Ownable {
   }
 
   /**
-   * @dev the public play function that users will call to buy tickets
-   * @return uint256: the number of tickets purchased
-   */
-  function play() 
-    public
-    payable
-    hasGame()
-    canPlayGame()
-    returns (uint256)
-  {
-
-    GameSettings storage settings = games[currentGameIndex].settings;
-    GameEntries storage entries = games[currentGameIndex].entries;
-
-    // solidity division is integer based so equivalent to Math.floor
-    uint256 ticketsPurchased = msg.value / settings.price;
-    // they cannot have a fractional ticket - TODO: work out what to do with
-    // the overspend amount
-    uint256 overspend = msg.value - (ticketsPurchased * settings.price);
-
-    if(ticketsPurchased > 0) {
-      if(entries.balances[msg.sender] <= 0) {
-        entries.players.push(msg.sender);
-      }
-      entries.balances[msg.sender] += ticketsPurchased;
-    }
-    
-    // return the money left over from the tickets
-    if(overspend > 0) {
-      msg.sender.transfer(overspend);
-    }
-
-    return ticketsPurchased;
-  }
-
-
-  /**
    * @dev the function called by the owner to choose a winner
    * @return uint256 the number of tickets purchased
    */
@@ -349,7 +296,7 @@ contract HashKeyLottery is Ownable {
     require(verifySecretKey(currentGameIndex, _secretKey));
 
     uint256 finalNumber = getDrawNumber(currentGameIndex, _secretKey);
-    address[] memory drawAddresses = getDrawAddresses(currentGameIndex);
+    address[] memory drawAddresses = getTickets(currentGameIndex);
     // pick the winning index using modulus numTickets
     uint256 numTickets = drawAddresses.length;
 
@@ -386,29 +333,7 @@ contract HashKeyLottery is Ownable {
   }
 
   /**
-   * @dev allow a single player to refund themselves and they pay the gas
-   */
-  function refundPlayer()
-    public
-    hasGame()
-    canRefund()
-  {
-
-    GameSettings storage settings = games[currentGameIndex].settings;
-    GameEntries storage entries = games[currentGameIndex].entries;
-
-    // check their balance
-    uint256 balance = entries.balances[msg.sender];
-    require(balance > 0);
-
-    // send the refund
-    uint256 refundAmount = settings.price * balance;
-    entries.balances[msg.sender] = 0;
-    msg.sender.transfer(refundAmount);
-  }
-
-  /**
-   * @dev refund all remaining balances and mark the game as refundComplete
+   * @dev refund all remaining balances and mark the game as refunded and complete
    */
   function refundAll()
     public
@@ -434,7 +359,82 @@ contract HashKeyLottery is Ownable {
     settings.complete = block.timestamp;
   }
 
-  function getGame(uint256 gameIndex) public view returns (uint256, uint256, uint256, string, uint256, uint256, uint256, uint256, bool) {
+
+  /*
+  
+    PUBLIC STATE CHANGING METHODS
+    
+  */
+
+  /**
+   * @dev the public play function that users will call to buy tickets
+   * @return uint256: the number of tickets purchased
+   */
+  function play() 
+    public
+    payable
+    hasGame()
+    canPlayGame()
+    returns (uint256)
+  {
+
+    GameSettings storage settings = games[currentGameIndex].settings;
+    GameEntries storage entries = games[currentGameIndex].entries;
+
+    // solidity division is integer based so equivalent to Math.floor
+    uint256 ticketsPurchased = msg.value / settings.price;
+    // they cannot have a fractional ticket - TODO: work out what to do with
+    // the overspend amount
+    uint256 overspend = msg.value - (ticketsPurchased * settings.price);
+
+    if(ticketsPurchased > 0) {
+      if(entries.balances[msg.sender] <= 0) {
+        entries.players.push(msg.sender);
+      }
+      entries.balances[msg.sender] += ticketsPurchased;
+    }
+    
+    // return the money left over from the tickets
+    if(overspend > 0) {
+      msg.sender.transfer(overspend);
+    }
+
+    return ticketsPurchased;
+  }
+
+  /**
+   * @dev allow a single player to refund themselves and they pay the gas
+   */
+  function refundPlayer()
+    public
+    hasGame()
+    canRefund()
+  {
+
+    GameSettings storage settings = games[currentGameIndex].settings;
+    GameEntries storage entries = games[currentGameIndex].entries;
+
+    // check their balance
+    uint256 balance = entries.balances[msg.sender];
+    require(balance > 0);
+
+    // send the refund
+    uint256 refundAmount = settings.price * balance;
+    entries.balances[msg.sender] = 0;
+    msg.sender.transfer(refundAmount);
+  }
+
+
+  /*
+  
+    PUBLIC VIEW METHODS
+    
+  */
+
+  /**
+   * @dev return the base settings for the game
+   */
+  function getGame(uint gameIndex) public view returns (uint, uint256, uint256, string, uint256, uint256, uint256, uint256, bool) {
     Game storage game = games[gameIndex];
     return (
       game.index,
@@ -449,13 +449,51 @@ contract HashKeyLottery is Ownable {
     );
   }
 
-  function getBalances(uint256 gameIndex) public view returns (address[] addresses, uint256[] balances) {
+
+  /**
+   * @dev get the total length of the tickets
+   * @return uint256
+   */
+  function getDrawLength(uint gameIndex) public view returns (uint256) {
+    require(gameIndex > 0);
     GameEntries storage entries = games[gameIndex].entries;
+    uint256 counter = 0;
+    for(uint256 i=0; i<entries.players.length; i++) {
+      counter += entries.balances[entries.players[i]];
+    }
+    return counter;
+  }
+
+  /**
+   * @dev get a flat array of addresses for the draw
+   * @return address[]
+   */
+  function getTickets(uint gameIndex) public view returns (address[]) {
+    require(gameIndex > 0);
+    GameEntries storage entries = games[gameIndex].entries;
+    uint256 arrLength = getDrawLength(gameIndex);
+    address[] memory _addresses = new address[](arrLength);
+    uint256 _addressIndex = 0;
     for(uint256 i=0; i<entries.players.length; i++) {
       var playerAddress = entries.players[i];
-      var balance = entries.balances[playerAddress];
-      addresses[i] = playerAddress;
-      balances[i] = balance;
+      for(uint256 j=0; j<entries.balances[playerAddress]; j++) {
+        _addresses[_addressIndex++] = playerAddress;
+      }
     }
+    return _addresses;
+  }
+
+  /**
+   * @dev return two arrays of address -> game balance
+   */
+  function getBalances(uint gameIndex) public view returns (address[], uint256[]) {
+    require(gameIndex > 0);
+    GameEntries storage entries = games[gameIndex].entries;
+    uint256 arrLength = entries.players.length;
+    uint256[] memory _balances = new uint256[](arrLength);
+    for(uint256 i=0; i<entries.players.length; i++) {
+      _balances[i] = entries.balances[entries.players[i]];
+    }
+    return (entries.players, _balances);
   }
 }
