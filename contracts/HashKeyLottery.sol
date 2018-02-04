@@ -209,7 +209,8 @@ contract HashKeyLottery is Ownable {
     require(_drawPeriod > 0);
     require(_feePercent < 100);
 
-    // draw period cannot be more than 7 days
+    // draw period cannot be more than 7 days to prevent everything being
+    // locked up for ages - this means the maximum time folks would wait for refunds
     require(_drawPeriod < 60 * 60 * 24 * 7);
 
     // games start at index=1
@@ -350,7 +351,7 @@ contract HashKeyLottery is Ownable {
   /**
    * @dev refund all remaining balances and mark the game as refundComplete
    */
-  function canRefundAll()
+  function refundAll()
     public
     onlyOwner
     hasGame()

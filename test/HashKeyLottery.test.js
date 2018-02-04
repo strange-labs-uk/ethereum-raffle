@@ -135,10 +135,7 @@ contract('HashKeyLottery', function (accounts) {
     (await this.lottery.currentGameIndex()).toNumber().should.equal(1);
 
     const defaultGame = convertGameData(await this.lottery.getGame(1))
-    console.log('-------------------------------------------');
-    console.log('-------------------------------------------');
-    console.dir(defaultGame)
-
+    
     expect(defaultGame).to.deep.equal({
       index: 1,
       price: 1,
@@ -152,9 +149,6 @@ contract('HashKeyLottery', function (accounts) {
     })
     
   });
-
-/*
-
 
   it('should deny a new game when an existing one exists but has not started', async function () {
     await newGame(this, {}).should.be.fulfilled;
@@ -170,15 +164,6 @@ contract('HashKeyLottery', function (accounts) {
   it('should deny a new game when an existing has finished but not complete', async function () {
     await newGame(this, {}).should.be.fulfilled;
     await increaseTimeTo(this.afterEndTime);
-    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
-  });
-
-  it('should deny a new game when an existing is being refunded', async function () {
-    await newGame(this, {}).should.be.fulfilled;
-    await increaseTimeTo(this.afterRefundTime);
-    await this.lottery.refund({
-      from: accounts[1]
-    }).should.be.fulfilled;
     await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
   });
 
@@ -238,6 +223,7 @@ contract('HashKeyLottery', function (accounts) {
 
 
 
+/*
 
 
 
@@ -246,6 +232,23 @@ contract('HashKeyLottery', function (accounts) {
 
 
 
+
+
+
+
+
+
+
+
+
+  it('should deny a new game when an existing is being refunded', async function () {
+    await newGame(this, {}).should.be.fulfilled;
+    await increaseTimeTo(this.afterRefundTime);
+    await this.lottery.refundAll({
+      from: accounts[1]
+    }).should.be.fulfilled;
+    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
+  });
 
 
 
