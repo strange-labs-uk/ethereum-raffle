@@ -22,18 +22,46 @@ const should = require('chai')
 
 const HashKeyLottery = artifacts.require('HashKeyLottery');
 
-const convertGameData = (arr) => {
-  return {
-    index: arr[0].toNumber(),
-    price: arr[1].toNumber(),
-    feePercent: arr[2].toNumber(),
-    secretKeyHash: arr[3],
-    start: arr[4].toNumber(),
-    end: arr[5].toNumber(),
-    complete: arr[6].toNumber(),
-    drawPeriod: arr[7].toNumber(),
-    refunded: arr[8],
-  }
+const convertGameSettingsData = (arr) => {
+  return [
+    'price',
+    'feePercent',
+    'start',
+    'end',
+    'complete',
+    'drawPeriod',
+  ].reduce((all, f, i) => {
+    all[f] = arr[i].toNumber()
+    return all
+  }, {})
+}
+
+const convertGameSecurityData = (arr) => {
+  return [
+    'entropy',
+    'lastBlockHash',
+    'secretKeyHash',
+    'secretKey',
+  ].reduce((all, f, i) => {
+    all[f] = arr[i]
+    return all
+  }, {})
+}
+
+const convertGameResultsData = (arr) => {
+  const numberFields = [
+    'prizePaid',
+    'feesPaid',
+  ]
+  return [
+    'refunded',
+    'winner',
+    'prizePaid',
+    'feesPaid',
+  ].reduce((all, f, i) => {
+    all[f] = numberFields.indexOf(f) >= 0 ? web3.fromWei(arr[i].toNumber(), "ether") : arr[i]
+    return all
+  }, {})
 }
 
 const convertBalanceData = (data) => {
@@ -71,7 +99,7 @@ contract('HashKeyLottery', function (accounts) {
 
   const newGame = (t, props = {}) => {
 
-    const price = props.price === undefined ? 1 : props.price
+    const price = props.price === undefined ? ticketPrice(1) : props.price
     const fees = props.fees === undefined ? 10 : props.fees
     const secret = props.secret || t.secret || 'apples'
     const start = props.start || t.startTime
@@ -105,24 +133,39 @@ contract('HashKeyLottery', function (accounts) {
     )
   }
 
+  const ticketPrice = (n) => 1000000000000 * n
+
   async function addThreePlayers(t) {
     await newGame(t, {}).should.be.fulfilled;
     await increaseTimeTo(t.startTime + duration.hours(1));
     await t.lottery.play({
       from: accounts[1],
-      value: 1
+      value: ticketPrice(1)
     }).should.be.fulfilled;
     await increaseTimeTo(t.startTime + duration.hours(2));
     await t.lottery.play({
       from: accounts[2],
-      value: 2
+      value: ticketPrice(2)
     }).should.be.fulfilled;
     await increaseTimeTo(t.startTime + duration.hours(3));
     await t.lottery.play({
       from: accounts[3],
-      value: 3
+      value: ticketPrice(3)
     }).should.be.fulfilled;
     (await t.lottery.currentGameIndex()).toNumber().should.equal(1);
+  }
+
+  const getBalance = (address, raw) => {
+    const ret = web3.eth.getBalance(address).toNumber()
+    return raw ? ret : web3.fromWei(ret, "ether")
+  }
+
+  const getBalances = (raw) => {
+    let ret = []
+    for(var i=0; i<4; i++) {
+      ret.push(getBalance(accounts[i], raw))
+    }
+    return ret
   }
 
   before(async function () {
@@ -182,7 +225,6 @@ contract('HashKeyLottery', function (accounts) {
     }).should.be.rejectedWith(EVMRevert);
   });
 
-
   it('should deny a new game when an existing one exists but has not started', async function () {
     await newGame(this, {}).should.be.fulfilled;
     await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
@@ -202,7 +244,7 @@ contract('HashKeyLottery', function (accounts) {
 
   it('should not let someone play where there is no game', async function () {
     await this.lottery.play({
-      value: 10,
+      value: ticketPrice(1),
       from: accounts[1],
     }).should.be.rejectedWith(EVMRevert);
   });
@@ -212,18 +254,15 @@ contract('HashKeyLottery', function (accounts) {
 
     (await this.lottery.currentGameIndex()).toNumber().should.equal(1);
 
-    const defaultGame = convertGameData(await this.lottery.getGame(1))
+    const gameSettings = convertGameSettingsData(await this.lottery.getGameSettings(1))
 
-    expect(defaultGame).to.deep.equal({
-      index: 1,
-      price: 1,
+    expect(gameSettings).to.deep.equal({
+      price: ticketPrice(1),
       feePercent: 10,
-      secretKeyHash: getHash('apples'),
       start: this.startTime,
       end: this.endTime,
       complete: 0,
       drawPeriod: this.drawPeriod,
-      refunded: false,
     })
     
   });
@@ -233,7 +272,7 @@ contract('HashKeyLottery', function (accounts) {
     await increaseTimeTo(this.startTime - duration.seconds(1));
     await this.lottery.play({
       from: accounts[1],
-      value: 10
+      value: ticketPrice(1)
     }).should.be.rejectedWith(EVMRevert);
   });
 
@@ -242,7 +281,7 @@ contract('HashKeyLottery', function (accounts) {
     await increaseTimeTo(this.endTime + duration.seconds(1));
     await this.lottery.play({
       from: accounts[1],
-      value: 10
+      value: ticketPrice(1)
     }).should.be.rejectedWith(EVMRevert);
   });
 
@@ -251,7 +290,7 @@ contract('HashKeyLottery', function (accounts) {
     await increaseTimeTo(this.endTime + duration.seconds(1));
     await this.lottery.play({
       from: accounts[1],
-      value: 10
+      value: ticketPrice(1)
     }).should.be.rejectedWith(EVMRevert);
   });
 
@@ -328,122 +367,45 @@ contract('HashKeyLottery', function (accounts) {
   });
 
   it('should accept a draw', async function () {
+
+    const beforeBalances = getBalances()
+    const beforeBalancesRaw = getBalances(true)
+
     await addThreePlayers(this)
     await increaseTimeTo(this.endTime + duration.hours(1));
+    
     await this.lottery.draw(this.secret, {
       from: accounts[0],
     }).should.be.fulfilled;
 
-    const gameData = convertGameData(await this.lottery.getGame(1))
-    console.log(JSON.stringify(gameData, null, 4))
+    const gameSettings = convertGameSettingsData(await this.lottery.getGameSettings(1))
+    const gameSecurity = convertGameSecurityData(await this.lottery.getGameSecurity(1))
+    const gameResults = convertGameResultsData(await this.lottery.getGameResults(1))
+
+    gameSettings.complete.should.be.a('number')
+    gameSettings.complete.should.above(gameSettings.end)
+    gameResults.winner.should.be.oneOf(accounts)
+
+    const winningIndex = accounts.indexOf(gameResults.winner)
+
+    winningIndex.should.be.above(0)
+    winningIndex.should.be.below(4)
+
+    gameResults.refunded.should.be.false
+
+    const afterBalances = getBalances()
+    const afterBalancesRaw = getBalances(true)
+
+    const ownerBefore = beforeBalancesRaw[0]
+    const ownerAfter = afterBalancesRaw[0]
+    const winningBefore = beforeBalancesRaw[winningIndex]
+    const winningAfter = afterBalancesRaw[winningIndex]
+
+    ownerAfter.should.be.above(ownerBefore)
+    winningAfter.should.be.above(winningBefore)
+
+    gameSecurity.secretKey.should.equal(this.secret)
+
   });
 
-/*
-
-
-
-
-
-
-
-
-
-
-  it('should deny a new game when an existing is being refunded', async function () {
-    await newGame(this, {}).should.be.fulfilled;
-    await increaseTimeTo(this.afterRefundTime);
-    await this.lottery.refundAll({
-      from: accounts[1]
-    }).should.be.fulfilled;
-    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
-  });
-
-
-
-
-
-
-
-
-
-
-
-  it('should create a game with defaults', async function () {
-    await newGame(this, {
-      account: accounts[0],
-      price: 2,
-      fees: 40,
-    }).should.be.fulfilled;
-
-    await newGame(this, {
-      account: accounts[0],
-      price: 20,
-      fees: 40,
-    }).should.be.fulfilled;
-
-    const gameCount = await this.lottery.currentGameId()
-
-    const game1 = await this.lottery.getGame(1)
-    const game2 = await this.lottery.getGame(2)
-    
-    console.log('-------------------------------------------');
-    console.log('-------------------------------------------');
-    console.dir(gameCount.toNumber())
-    console.dir(convertGameData(game1))
-    console.dir(convertGameData(game2))
-    
-    
-  });
-
-
-
-  it('should not accept payments before start', async function () {
-    await this.lottery.send(investmentAmount).should.be.rejectedWith(EVMRevert);
-    await this.lottery.buyTokens(investor, entropy, { value: investmentAmount, from: investor }).should.be.rejectedWith(EVMRevert);
-  });
-
-  it('should accept payments during the sale', async function () {
-    await increaseTimeTo(this.startTime);
-    await this.lottery.buyTokens(investor, entropy, { value: investmentAmount, from: investor }).should.be.fulfilled;
-
-    (await this.token.balanceOf(investor)).should.be.bignumber.equal(expectedNumTokens);
-    (await this.token.totalSupply()).should.be.bignumber.equal(expectedNumTokens);
-  });
-
-  it('should reject payments after end', async function () {
-    await increaseTimeTo(this.afterEndTime);
-    await this.lottery.send(investmentAmount).should.be.rejectedWith(EVMRevert);
-    await this.lottery.buyTokens(investor, entropy, { value: investmentAmount, from: investor }).should.be.rejectedWith(EVMRevert);
-  });
-
-  it('should reject running draw before end of raffle or if no tokens have been purchased', async function () {
-    await increaseTimeTo(this.startTime);
-    await this.lottery.runDraw().should.be.rejectedWith(EVMRevert);
-
-    await increaseTimeTo(this.afterEndTime);
-    await this.lottery.runDraw().should.be.rejectedWith(EVMRevert);    
-  });
-
-  it('should only be possible for the contract owner to run the draw after the raffle draw is over', async function () {
-    await increaseTimeTo(this.startTime);
-    await this.lottery.buyTokens(investor, entropy, { value: investmentAmount, from: investor }).should.be.fulfilled;
-    await this.lottery.buyTokens(anotherInvestor, anotherEntropy, { value: investmentAmount, from: anotherInvestor }).should.be.fulfilled;
-
-    await increaseTimeTo(this.afterEndTime);
-    await this.lottery.runDraw({from: investor}).should.be.rejectedWith(EVMRevert);
-    
-    const beforeDraw = web3.eth.getBalance(investor);
-    const { logs } = await this.lottery.runDraw({from: owner});
-
-    const event = logs.find(e => e.event === 'AnnounceWinner');
-    should.exist(event);
-
-    event.args.winningIndex.should.be.bignumber.equal(winningIndex);
-    event.args.winningAddress.should.equal(winningAddress);
-    event.args.winningPrize.should.be.bignumber.equal(winningPrize);
-
-    const afterDraw = web3.eth.getBalance(investor);
-    afterDraw.minus(beforeDraw).should.be.bignumber.equal(winningPrize);
-  });
-*/
 });

@@ -20,7 +20,7 @@ contract HashKeyLottery is Ownable {
   {
     bytes32 entropy;         // allow the user to add entropy at any point
     bytes32 lastBlockHash;   // save the blockhash that was used in the draw
-    bytes32 secretKeyHash;    // the hash of the secret key for this game
+    bytes32 secretKeyHash;   // the hash of the secret key for this game
     string secretKey;        // the final secret key saved once the game is complete
   }
 
@@ -54,7 +54,9 @@ contract HashKeyLottery is Ownable {
     GameEntries entries;
   }
 
-  // the max time allowed for a draw period to prevent funds being locked up forever
+  // the max time allowed after a game has ended for the draw to take place
+  // once this time has passed - players can refund themselves
+  // this prevents the owner never submitted the secret to draw and the funds being locked
   uint constant MAX_DRAW_PERIOD = 1 weeks;
 
   // the time given between an end and when the draw function can be called
@@ -65,7 +67,7 @@ contract HashKeyLottery is Ownable {
   // keep track of the currently active game
   uint public currentGameIndex;
 
-  // keep track of the currently active game
+  // the sequence of games ids in time earliest first - use this for iterating games
   uint[] public allGames;
   
   // the core state database of id -> game
@@ -429,21 +431,37 @@ contract HashKeyLottery is Ownable {
   /**
    * @dev return the base settings for the game
    */
-  function getGame(uint gameIndex) public view returns (uint, uint256, uint256, bytes32, uint, uint, uint, uint, bool) {
-    Game storage game = games[gameIndex];
+  function getGameSettings(uint gameIndex) public view returns (uint256, uint, uint, uint, uint, uint) {
+    GameSettings storage settings = games[gameIndex].settings;
     return (
-      game.index,
-      game.settings.price,
-      game.settings.feePercent,
-      game.security.secretKeyHash,
-      game.settings.start,
-      game.settings.end,
-      game.settings.complete,
-      game.settings.drawPeriod,
-      game.results.refunded
+      settings.price,
+      settings.feePercent,
+      settings.start,
+      settings.end,
+      settings.complete,
+      settings.drawPeriod
     );
   }
 
+  function getGameSecurity(uint gameIndex) public view returns (bytes32, bytes32, bytes32, string) {
+    GameSecurity storage security = games[gameIndex].security;
+    return (
+      security.entropy,
+      security.lastBlockHash,
+      security.secretKeyHash,
+      security.secretKey
+    );
+  }
+
+  function getGameResults(uint gameIndex) public view returns (bool, address, uint256, uint256) {
+    GameResults storage results = games[gameIndex].results;
+    return (
+      results.refunded,
+      results.winner,
+      results.prizePaid,
+      results.feesPaid
+    );
+  }
 
   /**
    * @dev get the total length of the tickets
