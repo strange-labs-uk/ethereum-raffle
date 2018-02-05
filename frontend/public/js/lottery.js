@@ -43,30 +43,23 @@ function updateCost() {
 }
 
 function initLottery() {
-    $.getJSON("/ws/Lottery.json", function(def) {
+    $.getJSON("/ws/HashKeyLottery.json", function(def) {
         // Retrieved the contract from the local geth node
         self.Lottery = web3.eth.contract(def['abi'])
                         .at(def.networks[self.network_id].address);
-
-        getWeiRate();
-        updateEthRaised();
-        initTime();
-        initLotteryToken();
-    });
-}
-
-function initLotteryToken() {
-    $.getJSON("/ws/MintableToken.json", function(def) {
-        self.Lottery.token(function(error,result){
-            if (error) {
-                console.log("Lottery.token fail");
+        
+        
+        self.Lottery.currentGameIndex.call(function(error, result) {
+            if (error){
+                console.log("Lottery.currentGameIndex fail");
                 console.log(error);
             } else {
-                console.log("Lottery.token success");
-                self.MintableToken = web3.eth.contract(def['abi']).at(result);
-                updateAccountBalance();
+                self.currentGameIndex = result;
+                getWeiRate();
+                updateEthRaised();
+                initTime();           
             }
-        })
+        });
     });
 }
 
@@ -96,13 +89,13 @@ function updateEthRaised() {
 }
 
 function getWeiRate() {
-    self.Lottery.rate.call(function(error, result) {
+    self.Lottery.getGameSettings.call(self.currentGameIndex, function(error, result) {
         if (error) {
-            console.log("Lottery.rate fail");
+            console.log("Lottery.getGameSettings fail");
             console.log(error);
         } else {
-            console.log("Lottery.rate success");
-            self.weiRate = result;
+            console.log("Lottery.getGameSettings success");
+            self.weiRate = result[0];
             updateCost();
         }
     });
