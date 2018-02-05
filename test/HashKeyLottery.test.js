@@ -9,7 +9,7 @@ import leftPad from 'leftpad'
 
 require('events').EventEmitter.prototype._maxListeners = 100000;
 
-const getHash = (st) => utils.soliditySha3(st, { encoding: 'hex' })
+const getHash = (st) => utils.soliditySha3(st)
 
 //Buffer.from(st, 'utf8').toString('hex'), {encoding: "hex"})
 
@@ -82,11 +82,6 @@ contract('HashKeyLottery', function (accounts) {
 
     if(process.env.DEBUG) {
 
-      console.log('-------------------------------------------');
-      console.log('-------------------------------------------');
-      console.log('raw: ' + utils.soliditySha3(secret))
-      console.log('rawhex: ' + utils.soliditySha3(secret, { encoding: 'hex' }))
-      
       console.log(JSON.stringify({
         price,
         secret,
@@ -145,14 +140,11 @@ contract('HashKeyLottery', function (accounts) {
     this.secret = 'apples'
   });
 
-/*
-
   it('should create the contract and be owned by account0', async function () {
     this.lottery.should.exist;
     const owner = await this.lottery.owner()
     owner.should.equal(accounts[0])
   });
-
 
   it('should deny a non-owner to create a game', async function () {
     await newGame(this, {
@@ -318,33 +310,22 @@ contract('HashKeyLottery', function (accounts) {
       from: accounts[0],
     }).should.be.rejectedWith(EVMRevert);
   });
-
-  it('should get the draw length', async function () {
+  
+  it('should reject a draw with the wrong secret', async function () {
     await addThreePlayers(this)
-
-    let drawLength = await this.lottery.getDrawLength(1);
-    drawLength = drawLength.toNumber()
-
-    // 1 for player 1, 2 for player 2, 3 for player 3
-    drawLength.should.equal(6);
-  });
-
-*/
-
-
-  it('should compare the seed', async function () {
-    await newGame(this, {}).should.be.fulfilled;
-    const seeds = await this.lottery.compareSeed(1, this.secret.valueOf(), {
+    await increaseTimeTo(this.endTime + duration.hours(1));
+    await this.lottery.draw(this.secret + 'BAD', {
       from: accounts[0],
-    })
-    console.log('-------------------------------------------');
-    console.dir(seeds)
-
-    console.dir(seeds.map(s => s.toString('hex')))
+    }).should.be.rejectedWith(EVMRevert);
   });
 
-/*
-
+  it('should reject a draw from a non owner', async function () {
+    await addThreePlayers(this)
+    await increaseTimeTo(this.endTime + duration.hours(1));
+    await this.lottery.draw(this.secret, {
+      from: accounts[1],
+    }).should.be.rejectedWith(EVMRevert);
+  });
 
   it('should accept a draw', async function () {
     await addThreePlayers(this)
@@ -357,23 +338,7 @@ contract('HashKeyLottery', function (accounts) {
     console.log(JSON.stringify(gameData, null, 4))
   });
 
-
-
-
-
-
-  it('should get the balance of all players', async function () {
-    await addThreePlayers(this)
-
-    const balances = convertBalanceData(await this.lottery.getBalances(1));
-    const tickets = await this.lottery.getTickets(1);
-
-    console.log('-------------------------------------------');
-    console.log('-------------------------------------------');
-    console.dir(balances)
-    console.dir(tickets)
-  });
-
+/*
 
 
 

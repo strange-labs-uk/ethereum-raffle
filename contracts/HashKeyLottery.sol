@@ -20,7 +20,7 @@ contract HashKeyLottery is Ownable {
   {
     bytes32 entropy;         // allow the user to add entropy at any point
     bytes32 lastBlockHash;   // save the blockhash that was used in the draw
-    string secretKeyHash;    // the hash of the secret key for this game
+    bytes32 secretKeyHash;    // the hash of the secret key for this game
     string secretKey;        // the final secret key saved once the game is complete
   }
 
@@ -147,9 +147,8 @@ contract HashKeyLottery is Ownable {
   function verifySecretKey(uint gameId, string _secretKey) public view returns (bool) {
     require(gameId > 0);
     GameSecurity storage security = games[gameId].security;
-    bytes32 givenHash = sha256(_secretKey);
-    // the _secretKey must line up with the originally submitted hash      
-    return keccak256(givenHash) == keccak256(security.secretKeyHash);
+    bytes32 givenHash = keccak256(_secretKey);
+    return givenHash == security.secretKeyHash;
   }
 
   /**
@@ -229,7 +228,7 @@ contract HashKeyLottery is Ownable {
    * @return uint256: the id of the new game
    */
 
-  function newGame(uint256 _price, string _secretKeyHash, uint _drawPeriod, uint _start, uint _end, uint _feePercent)
+  function newGame(uint256 _price, bytes32 _secretKeyHash, uint _drawPeriod, uint _start, uint _end, uint _feePercent)
     public
     onlyOwner
     canCreateGame()
@@ -274,34 +273,31 @@ contract HashKeyLottery is Ownable {
    * @return uint256 the number of tickets purchased
    */
   function draw(string _secretKey)
-    public
+    public    
     onlyOwner
     hasGame()
     canDrawGame()
   {
     GameSettings storage settings = games[currentGameIndex].settings;
     GameSecurity storage security = games[currentGameIndex].security;
-    //GameResults storage results = games[currentGameIndex].results;
+    GameResults storage results = games[currentGameIndex].results;
 
     // we want at least 2 minutes between the game ending and the draw
     // being called - this is to stop miners being able to use the secret_key
     // to make last minute calls to "play"
     require(block.timestamp > settings.end + END_BUFFER);
 
-    security.secretKey = _secretKey;
-
-    //security.secretKey = _secretKey;
     // the _secretKey must line up with the originally submitted hash      
-    //require(verifySecretKey(currentGameIndex, _secretKey));
-/*
+    require(verifySecretKey(currentGameIndex, _secretKey));
+
     uint256 finalNumber = getDrawNumber(currentGameIndex, _secretKey);
     address[] memory drawAddresses = getTickets(currentGameIndex);
     // pick the winning index using modulus numTickets
     uint256 numTickets = drawAddresses.length;
 
-    //g.settings.secretKey = _secretKey;
-    //g.settings.lastBlockHash = lastBlockHash;
     settings.complete = block.timestamp;
+    security.secretKey = _secretKey;
+    security.lastBlockHash = block.blockhash(block.number - 1);
 
     if(numTickets > 0) {
       uint256 winningIndex = finalNumber % numTickets;
@@ -329,7 +325,6 @@ contract HashKeyLottery is Ownable {
         owner.transfer(feeAmount);
       }
     }
-    */
   }
 
   /**
@@ -434,7 +429,7 @@ contract HashKeyLottery is Ownable {
   /**
    * @dev return the base settings for the game
    */
-  function getGame(uint gameIndex) public view returns (uint, uint256, uint256, string, uint, uint, uint, uint, bool) {
+  function getGame(uint gameIndex) public view returns (uint, uint256, uint256, bytes32, uint, uint, uint, uint, bool) {
     Game storage game = games[gameIndex];
     return (
       game.index,
@@ -495,15 +490,5 @@ contract HashKeyLottery is Ownable {
       _balances[i] = entries.balances[entries.players[i]];
     }
     return (entries.players, _balances);
-  }
-
-  function compareSeed(uint gameIndex, string _secretKey) public view returns (bytes32, string, string) {
-    GameSecurity storage security = games[gameIndex].security;
-    bytes32 givenHash = keccak256(_secretKey);
-    //bytes32 gameHash = bytes32(security.secretKeyHash);
-
-    // the _secretKey must line up with the originally submitted hash      
-    //return keccak256(givenHash) == keccak256(security.secretKeyHash);
-    return (givenHash, security.secretKeyHash, _secretKey);
   }
 }
