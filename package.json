@@ -9,14 +9,16 @@
   "author": "Bharat Kunwar",
   "license": "MIT",
   "dependencies": {
+    "leftpad": "^0.0.1",
+    "web3-utils": "^1.0.0-beta.29",
     "zeppelin-solidity": "^1.5.0"
   },
   "devDependencies": {
+    "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.18.0",
     "babel-preset-stage-2": "^6.24.1",
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.26.0",
-    "babel-polyfill": "^6.26.0",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "chai-bignumber": "^2.0.2",

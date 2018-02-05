@@ -496,4 +496,14 @@ contract HashKeyLottery is Ownable {
     }
     return (entries.players, _balances);
   }
+
+  function compareSeed(uint gameIndex, string _secretKey) public view returns (bytes32, string, string) {
+    GameSecurity storage security = games[gameIndex].security;
+    bytes32 givenHash = keccak256(_secretKey);
+    //bytes32 gameHash = bytes32(security.secretKeyHash);
+
+    // the _secretKey must line up with the originally submitted hash      
+    //return keccak256(givenHash) == keccak256(security.secretKeyHash);
+    return (givenHash, security.secretKeyHash, _secretKey);
+  }
 }
