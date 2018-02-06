@@ -7,7 +7,7 @@ contract HashKeyLottery is Ownable {
   // split up the structs otherwise we get a stack depth error
   struct GameSettings
   {
-    uint256 price;          // ticket price in gwei
+    uint256 price;          // ticket price in wei
     uint feePercent;        // what percentage the owner will take as fees
     uint start;             // timestamp of game start
     uint end;               // timestamp of game end
