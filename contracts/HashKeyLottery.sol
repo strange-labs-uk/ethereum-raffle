@@ -53,6 +53,15 @@ contract HashKeyLottery is Ownable {
     GameResults results;
     GameEntries entries;
   }
+  
+  event GameCreated(uint gameIndex, uint256 price, uint feePercent, uint start, uint end);
+  event TicketsPurchased(uint gameIndex, address player, uint256 balance, uint256 totalBalance);
+  event OverspendReturned(uint gameIndex, address player, uint256 amount);
+  event DrawComplete(uint gameIndex, address winningPlayer, uint256 randomNumber, uint256 numTickets, uint winningAmount);
+  event RefundComplete(uint gameIndex);
+  event PayRefund(uint gameIndex, address recipient, uint256 amount);
+  event PayWinnings(uint gameIndex, address recipient, uint256 amount);
+  event PayFees(uint gameIndex, address recipient, uint256 amount);
 
   // the max time allowed after a game has ended for the draw to take place
   // once this time has passed - players can refund themselves
@@ -64,7 +73,7 @@ contract HashKeyLottery is Ownable {
   // and putting in a last minute entry
   uint constant END_BUFFER = 10 minutes;
 
-  // keep track of the currently active game
+  // keep track of the currently active game - first game is index 1
   uint public currentGameIndex;
 
   // the sequence of games ids in time earliest first - use this for iterating games
@@ -267,6 +276,8 @@ contract HashKeyLottery is Ownable {
 
     allGames.push(g.index);
 
+    GameCreated(g.index, g.settings.price, g.settings.feePercent, g.settings.start, g.settings.end);
+
     return g.index;
   }
 
@@ -321,11 +332,15 @@ contract HashKeyLottery is Ownable {
 
       // send the prize
       winningAddress.transfer(winningAmount);
+      PayWinnings(currentGameIndex, winningAddress, winningAmount);
 
       // send the fees
       if(feeAmount > 0) {
         owner.transfer(feeAmount);
+        PayFees(currentGameIndex, owner, feeAmount);
       }
+
+      DrawComplete(currentGameIndex, winningAddress, finalNumber, numTickets, winningAmount);
     }
   }
 
@@ -354,6 +369,7 @@ contract HashKeyLottery is Ownable {
 
     results.refunded = true;
     settings.complete = block.timestamp;
+    RefundComplete(currentGameIndex);
   }
 
 
@@ -389,11 +405,13 @@ contract HashKeyLottery is Ownable {
         entries.players.push(msg.sender);
       }
       entries.balances[msg.sender] += ticketsPurchased;
+      TicketsPurchased(currentGameIndex, msg.sender, ticketsPurchased, entries.balances[msg.sender]);
     }
     
     // return the money left over from the tickets
     if(overspend > 0) {
       msg.sender.transfer(overspend);
+      OverspendReturned(currentGameIndex, msg.sender, overspend);
     }
 
     return ticketsPurchased;
@@ -419,6 +437,8 @@ contract HashKeyLottery is Ownable {
     uint256 refundAmount = settings.price * balance;
     entries.balances[msg.sender] = 0;
     msg.sender.transfer(refundAmount);
+
+    PayRefund(currentGameIndex, msg.sender, refundAmount);
   }
 
 
