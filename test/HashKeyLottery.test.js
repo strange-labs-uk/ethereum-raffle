@@ -15,7 +15,7 @@ const getHash = (st) => utils.soliditySha3(st)
 
 const BigNumber = web3.BigNumber;
 
-const ticketPrice = (n) => web3.toWei(n, 'ether')
+const ticketPrice = (n) => web3.toWei(n * 1000, 'gwei')
 
 const should = require('chai')
   .use(require('chai-as-promised'))
@@ -222,18 +222,15 @@ contract('HashKeyLottery', function (accounts) {
 
     const gameSettings = convertGameSettingsData(await this.lottery.getGameSettings(1))
 
-/*
-  TODO: this test is breaking because of type differences between the price
-
     expect(gameSettings).to.deep.equal({
-      price: ticketPrice(1),
+      price: parseInt(ticketPrice(1)),
       feePercent: 10,
       start: this.startTime,
       end: this.endTime,
       complete: 0,
       drawPeriod: this.drawPeriod,
     })
-    */
+    
   });
 
   it('should not allow play before the game has started', async function () {
@@ -391,6 +388,102 @@ contract('HashKeyLottery', function (accounts) {
     const checkCalcualtedGasPaid = Math.floor(calculatedGasPaid/100000)
 
     checkGasPaid.should.equal(checkCalcualtedGasPaid)
+  });
+
+  
+  it('should emit a GameCreated event', async function () {
+    const createTx = await newGame(this, {}).should.be.fulfilled;
+    const event = createTx.logs.find(e => e.event === 'GameCreated');
+    should.exist(event)
+    event.args.gameIndex.toNumber().should.equal(1)
+    event.args.price.toNumber().should.equal(parseInt(ticketPrice(1)))
+    event.args.feePercent.toNumber().should.equal(10)
+  });
+
+  it('should emit a TicketsPurchased event', async function () {
+    await newGame(this, {}).should.be.fulfilled;
+    await increaseTimeTo(this.startTime + duration.hours(1));
+    const playTx = await this.lottery.play({
+      from: accounts[1],
+      value: ticketPrice(1)
+    }).should.be.fulfilled;
+    const event = playTx.logs.find(e => e.event === 'TicketsPurchased');
+
+    should.exist(event)
+    event.args.gameIndex.toNumber().should.equal(1)
+    event.args.player.should.equal(accounts[1])
+    event.args.balance.toNumber().should.equal(1)
+    event.args.totalBalance.toNumber().should.equal(1)
+  });
+
+  it('should refund an overspend', async function () {
+    const GAS_PRICE = 60
+    await newGame(this, {
+      price: ticketPrice(10)
+    }).should.be.fulfilled;
+    await increaseTimeTo(this.startTime + duration.hours(1));
+    const beforePlayBalance = getAccountBalances([1])[0]
+    const playTx = await this.lottery.play({
+      from: accounts[1],
+      value: ticketPrice(15),
+      gasPrice: GAS_PRICE
+    }).should.be.fulfilled;
+    const afterPlayBalance = getAccountBalances([1])[0]
+    const balanceDiff = beforePlayBalance - afterPlayBalance
+    const gasUsed = web3.toBigNumber(playTx.receipt.gasUsed)
+    // even though we paid 15 - we should only be missing 10 plus gas
+    const gasPaid = balanceDiff - ticketPrice(10)
+    const calculatedGasPaid = gasUsed.times(GAS_PRICE).toNumber()
+
+    // we give some room here because the actual gas is never the same
+    const checkGasPaid = Math.floor(gasPaid/100000)
+    const checkCalcualtedGasPaid = Math.floor(calculatedGasPaid/100000)
+
+    checkGasPaid.should.equal(checkCalcualtedGasPaid)
+  })
+
+  it('should emit a OverspendReturned event', async function () {
+    await newGame(this, {
+      price: ticketPrice(10)
+    }).should.be.fulfilled;
+    await increaseTimeTo(this.startTime + duration.hours(1));
+    const playTx = await this.lottery.play({
+      from: accounts[1],
+      value: ticketPrice(15)
+    }).should.be.fulfilled;
+
+    const event = playTx.logs.find(e => e.event === 'OverspendReturned');
+
+    should.exist(event)
+
+    event.args.gameIndex.toNumber().should.equal(1)
+    event.args.player.should.equal(accounts[1])
+
+    // we should be seeing a refund of 5 ether (or 5 units)
+    event.args.amount.toNumber().should.equal(parseInt(ticketPrice(5)))
+  });
+
+  it('should allow a refund if passed the drawPeriod', async function () {
+    const GAS_PRICE = 60
+    await newGame(this, {
+      price: ticketPrice(10)
+    }).should.be.fulfilled;
+    await increaseTimeTo(this.startTime + duration.hours(1));
+    const beforePlayBalance = getAccountBalances([1])[0]
+    const playTx = await this.lottery.play({
+      from: accounts[1],
+      value: ticketPrice(10),
+      gasPrice: GAS_PRICE
+    }).should.be.fulfilled;
+    await increaseTimeTo(this.afterRefundTime + duration.hours(1));
+    const refundTx = await this.lottery.refund({
+      from: accounts[1],
+      gasPrice: GAS_PRICE
+    }).should.be.fulfilled;
+    const afterRefundBalance = getAccountBalances([1])[0]
+
+    // we should have got at least 9 ticket prices back (because I can't be bother to do the gas code like above)
+    afterRefundBalance.should.be.above(beforePlayBalance -parseInt(ticketPrice(1)))
   });
 
 });

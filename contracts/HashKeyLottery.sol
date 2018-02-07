@@ -1,9 +1,12 @@
 pragma solidity ^0.4.18;
 
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract HashKeyLottery is Ownable {
 
+  using SafeMath for uint256;
+  
   // split up the structs otherwise we get a stack depth error
   struct GameSettings
   {
@@ -134,7 +137,7 @@ contract HashKeyLottery is Ownable {
       settings.end > 0 && 
       settings.drawPeriod > 0 && 
       block.timestamp > settings.end &&
-      block.timestamp < (settings.end + settings.drawPeriod);
+      block.timestamp < settings.end.add(settings.drawPeriod);
   }
 
   /**
@@ -147,7 +150,7 @@ contract HashKeyLottery is Ownable {
     return 
       settings.end > 0 && 
       settings.drawPeriod > 0 && 
-      block.timestamp > (settings.end + settings.drawPeriod);
+      block.timestamp > settings.end.add(settings.drawPeriod);
   }
 
 
@@ -298,7 +301,7 @@ contract HashKeyLottery is Ownable {
     // we want at least 2 minutes between the game ending and the draw
     // being called - this is to stop miners being able to use the secret_key
     // to make last minute calls to "play"
-    require(block.timestamp > settings.end + END_BUFFER);
+    require(block.timestamp > settings.end.add(END_BUFFER));
 
     // the _secretKey must line up with the originally submitted hash      
     require(verifySecretKey(currentGameIndex, _secretKey));
@@ -315,14 +318,14 @@ contract HashKeyLottery is Ownable {
     if(numTickets > 0) {
       uint256 winningIndex = finalNumber % numTickets;
       address winningAddress = drawAddresses[winningIndex];
-      uint256 totalPot = settings.price * numTickets;
+      uint256 totalPot = settings.price.mul(numTickets);
       uint256 feeAmount = 0;
       uint256 winningAmount = totalPot;
 
       // if there are fees to pay then calculate them
       if(settings.feePercent > 0) {
-        feeAmount = (totalPot / 100) * settings.feePercent;
-        winningAmount = totalPot - feeAmount;
+        feeAmount = totalPot.div(100).mul(settings.feePercent);
+        winningAmount = totalPot.sub(feeAmount);
       }
       
       // update the state of the game
@@ -363,7 +366,7 @@ contract HashKeyLottery is Ownable {
       uint256 balance = entries.balances[playerAddress];
       if(balance > 0) {
         entries.balances[playerAddress] = 0;
-        playerAddress.transfer(settings.price * balance);
+        playerAddress.transfer(settings.price.mul(balance));
       }
     }
 
@@ -394,17 +397,20 @@ contract HashKeyLottery is Ownable {
     GameSettings storage settings = games[currentGameIndex].settings;
     GameEntries storage entries = games[currentGameIndex].entries;
 
+    require(settings.price > 0);
+
     // solidity division is integer based so equivalent to Math.floor
-    uint256 ticketsPurchased = msg.value / settings.price;
+    uint256 ticketsPurchased = msg.value.div(settings.price);
+    uint256 totalCost = ticketsPurchased.mul(settings.price);
     // they cannot have a fractional ticket - TODO: work out what to do with
     // the overspend amount
-    uint256 overspend = msg.value - (ticketsPurchased * settings.price);
+    uint256 overspend = msg.value.sub(totalCost);
 
     if(ticketsPurchased > 0) {
       if(entries.balances[msg.sender] <= 0) {
         entries.players.push(msg.sender);
       }
-      entries.balances[msg.sender] += ticketsPurchased;
+      entries.balances[msg.sender] = entries.balances[msg.sender].add(ticketsPurchased);
       TicketsPurchased(currentGameIndex, msg.sender, ticketsPurchased, entries.balances[msg.sender]);
     }
     
@@ -420,7 +426,7 @@ contract HashKeyLottery is Ownable {
   /**
    * @dev allow a single player to refund themselves and they pay the gas
    */
-  function refundPlayer()
+  function refund()
     public
     hasGame()
     canRefund()
@@ -434,7 +440,7 @@ contract HashKeyLottery is Ownable {
     require(balance > 0);
 
     // send the refund
-    uint256 refundAmount = settings.price * balance;
+    uint256 refundAmount = settings.price.mul(balance);
     entries.balances[msg.sender] = 0;
     msg.sender.transfer(refundAmount);
 
