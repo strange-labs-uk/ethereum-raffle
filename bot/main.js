@@ -18,15 +18,20 @@ web3.setProvider(new web3.providers.HttpProvider(ethereum_uri));
 
 account = web3.eth.accounts.privateKeyToAccount(private_key);
 
-getJSON(node_url + '/ws/Lottery.json', (error, resp) => {
+getJSON(node_url + '/ws/HashKeyLottery.json', (error, resp) => {
     web3.eth.net.getId().then(networkId => {
         var lotteryContract = new web3.eth.Contract(resp['abi'], resp.networks[networkId].address);
-        lotteryContract.newGame(utils.toWei('0.1', 'ether'),        //price
-                                getHash(super_secert).valueOf(),    //secert hash
-                                60*60,                              //Duration (1hr)
-                                Date.today(),                       //Start time
-                                Date.today().add(1).hours(),        //End time 
-                                2                                   //Fee percent
-        ).then(() => console.log('done'));
+        t = lotteryContract.methods.newGame(utils.toWei('0.1', 'ether'),        //price
+                                getHash(super_secert).valueOf(),        //secert hash
+                                60*60,                                  //Duration (1hr)
+                                Date.today().valueOf(),                 //Start time
+                                Date.today().add(1).hours().valueOf(),  //End time 
+                                2                                       //Fee percent
+        )
+        .send({from: account.address, gas: 4712388})
+        .then((result) => console.log(result))
+        .catch(function(error){
+            Console.log("Could not call newGame. Error: " + error);
+        });
     });
 });
