@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 
 var Web3 = require('web3');
-var getJSON = require('get-json')
+var utils = require('web3-utils');
+var getJSON = require('get-json');
+var dateJS = require('datejs');
 
-var private_key = '0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3'
-var ethereum_uri = 'http://localhost:9545'
-var node_url = 'http://localhost:3000'
+const getHash = (st) => utils.soliditySha3(st);
+
+var private_key = '0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3';
+var ethereum_uri = 'http://localhost:9545';
+var node_url = 'http://localhost:3000';
+var super_secert = 'apples';
 
 var web3 = new Web3();
 
@@ -13,10 +18,15 @@ web3.setProvider(new web3.providers.HttpProvider(ethereum_uri));
 
 account = web3.eth.accounts.privateKeyToAccount(private_key);
 
-
-getJSON(node_url + '/ws/Lottery.json', function(error, resp) {
-    web3.eth.net.getId().then(function(networkId) {
+getJSON(node_url + '/ws/Lottery.json', (error, resp) => {
+    web3.eth.net.getId().then(networkId => {
         var lotteryContract = new web3.eth.Contract(resp['abi'], resp.networks[networkId].address);
-        //lotteryContract.newGame(0.1 * 1000, "123", 60*60)
+        lotteryContract.newGame(utils.toWei('0.1', 'ether'),        //price
+                                getHash(super_secert).valueOf(),    //secert hash
+                                60*60,                              //Duration (1hr)
+                                Date.today(),                       //Start time
+                                Date.today().add(1).hours(),        //End time 
+                                2                                   //Fee percent
+        ).then(() => console.log('done'));
     });
 });

@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "datejs": "^1.0.0-rc3",
     "get-json": "^1.0.0",
-    "web3": "^1.0.0-beta.29"
+    "web3": "^1.0.0-beta.29",
+    "web3-utils": "^1.0.0-beta.29"
   }
 }
