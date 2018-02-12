@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <title><%= htmlWebpackPlugin.options.title %></title>
+    <meta name="viewport" content="initial-scale=1.0,user-scalable=no,maximum-scale=1,width=device-width">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet">
+    <style type="text/css">
+      html,body,#mount {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        border: 0;
+        overflow: hidden;
+      }
+      *:focus {
+        outline: none;
+      }
+    </style>
+    <% htmlWebpackPlugin.files.css.map(function(file){ %>
+      <link rel="stylesheet" href="<%- file %>">
+    <% }) %>
+  </head>
+
+  <body>
+    <div id="mount"></div>
+    <% htmlWebpackPlugin.files.js.map(function(file){ %>
+      <script src="<%- file %>"></script>
+    <% }) %>
+  </body>
+</html>

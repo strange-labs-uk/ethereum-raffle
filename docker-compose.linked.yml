@@ -1,0 +1,14 @@
+version: '2'
+services:
+  frontend:
+    volumes:
+      - ./app/src:/app/frontend/src
+      - ./app/www:/app/frontend/www
+      - ./app/package.json:/app/frontend/package.json
+      - ./app/apps.config.js:/app/frontend/apps.config.js
+      - ./app/toolbox-variables.js:/app/frontend/toolbox-variables.js
+      - ./app/yarn.lock:/app/frontend/yarn.lock
+      - ./app/template.ejs:/app/frontend/template.ejs
+      - ../templatestack/template-ui/lib:/app/frontend/node_modules/template-ui/lib
+      - ../templatestack/template-tools/src:/app/frontend/node_modules/template-tools/src
+  

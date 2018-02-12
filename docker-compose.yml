@@ -1,0 +1,16 @@
+version: '2'
+services:
+  frontend:
+    build:
+      context: ./
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"
+    container_name: ethereum_lottery_frontend
+    entrypoint:
+      - "bash"
+      - "run.sh"
+    environment:
+      - MANUALRUN
+      - NODE_ENV=development
+  
