@@ -34,9 +34,12 @@ function frontend() {
     # into the same folder as ethereum-lottery
     linkedPath=" -v $DIR/../templatestack/template-ui/lib:/app/node_modules/template-ui/lib -v $DIR/../templatestack/template-tools/src:/app/node_modules/template-tools/src"
   fi
-  docker run -d \
+  docker run -ti --rm \
     --name $APPNAME-frontend \
-    -p 8080:80 $linkedPath -v "$DIR/frontend/src:/app/src" \
+    -p 8080:80 $linkedPath \
+    -e "TEST_WEB3_PROVIDER=http://127.0.0.1:8545" \
+    -v "$DIR/frontend/src:/app/src" \
+    -v "$DIR/frontend/www:/app/www" \
     "$APPNAME-frontend"
 }
 
@@ -64,8 +67,21 @@ function truffle() {
   if [ -t 1 ] ; then
     extraDocker="$extraDocker -ti"
   fi
-  docker run --rm $extraDocker \
+  docker rm -f $APPNAME-truffle || true
+  docker run $extraDocker \
+    --name $APPNAME-truffle \
     $APPNAME-truffle $extraGanache "$@" 
+}
+
+# build/deploy the contracts then copy the build folder into the frontend Docker context
+function migrate() {
+  rm -rf $DIR/frontend/www/build
+  truffle migrate
+  if [ ! -d "$DIR/truffle/build" ]; then
+    docker cp $APPNAME-truffle:/app/build $DIR/truffle/build
+  fi
+  cp -r $DIR/truffle/build $DIR/frontend/www/build
+  docker rm -f $APPNAME-truffle || true
 }
 
 function ganache() {

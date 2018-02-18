@@ -5,5 +5,8 @@ const appsConfig = require('./apps.config')
 module.exports = Webpack({
   toolboxVariables,
   appsConfig,
-  dirname: __dirname
+  dirname: __dirname,
+  defineVariables: {
+    'process.env.TEST_WEB3_PROVIDER': process.env.TEST_WEB3_PROVIDER
+  },
 })

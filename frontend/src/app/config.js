@@ -36,8 +36,8 @@ const icons = {
 }
 
 const config = {
-  title:'',
-  basepath:'/app',
+  title:'Ethereum Lottery',
+  basepath:'/',
   // the default state for the value reducer
   initialState: {
     value: {

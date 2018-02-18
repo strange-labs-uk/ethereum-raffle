@@ -26,7 +26,8 @@ export default connect(
       menuOptions,
       bodyScroll: manualScroll ? true : false,
       initialized: selectors.system.initialized(state),
-      snackbar: selectors.system.message(state)
+      snackbar: selectors.system.message(state),
+      web3Error: selectors.value.get(state, 'web3Error') ? true : false,
     }
   },
   (dispatch) => {

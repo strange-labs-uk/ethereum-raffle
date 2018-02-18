@@ -25,6 +25,9 @@
 
   <body>
     <div id="mount"></div>
+    <% if(process.env.TEST_WEB3_PROVIDER) { %>
+      <script src="/web3.min.js"></script>
+    <% } %>
     <% htmlWebpackPlugin.files.js.map(function(file){ %>
       <script src="<%- file %>"></script>
     <% }) %>

@@ -1,7 +1,8 @@
 const CONFIG = {
   apps: [{
     "name": "app",
-    "title": "Ethereum Receipts"
+    "title": "Ethereum Lottery",
+    "isRoot": true,
   }],
   apiServers: [],
   sharedModules: [

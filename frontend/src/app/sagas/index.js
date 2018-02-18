@@ -7,6 +7,11 @@ import actions from '../actions'
 
 import config from '../config'
 import Hooks from './hooks'
+import Web3 from './web3'
+
+const web3 = Web3({
+  
+})
 
 const hooks = Hooks({
   
@@ -19,7 +24,7 @@ const router = RouterSaga({
 })
 
 function* initialize() {
-  yield call(delay, 1)
+  yield call(web3.initialize)
   yield call(hooks.initialize)
   yield fork(router.initialize)
   yield put(actions.system.initialized())
