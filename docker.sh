@@ -51,6 +51,8 @@ function frontend-stop() {
 function truffle() {
   local extraDocker=""
   local extraGanache=""
+  # LOCAL_TRUFFLE means a "truffle develop"
+  # it means we are not expecting a ganache container to be running
   if [ -z "$LOCAL_TRUFFLE" ]; then
     extraDocker="$extraDocker --net $APPNAME-network -e GANACHE_HOST=$APPNAME-ganache "
     extraGanache="$extraGanache --network ganache "
