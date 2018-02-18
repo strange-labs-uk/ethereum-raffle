@@ -13,7 +13,7 @@ module.exports = {
       gas:4712388,
     },
     ganache: {
-      host: 'ganache',
+      host: process.env.GANACHE_HOST || 'ganache',
       port: 8545,
       network_id: "*",
       gas:4712388,

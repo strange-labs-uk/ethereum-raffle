@@ -5,6 +5,8 @@ export DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export APPNAME=${APPNAME:="lottery"}
 export LINK_TEMPLATESTACK=${LINK_TEMPLATESTACK:=""}
+export CI_JOB_ID=${CI_JOB_ID:=""}
+export LOCAL_TRUFFLE=${LOCAL_TRUFFLE:=""}
 
 function build-truffle() {
   docker build -t $APPNAME-truffle truffle
@@ -24,18 +26,6 @@ function build() {
   build-bot
 }
 
-function network-create() {
-  if [ -z "$(docker network ls | grep $APPNAME-network)" ]; then
-    docker network create $APPNAME-network
-  fi
-}
-
-function network-delete() {
-  if [ -n "$(docker network ls | grep $APPNAME-network)" ]; then
-    docker network rm $APPNAME-network
-  fi
-}
-
 function frontend() {
   local linkedPath=""
   if [ -n "$LINK_TEMPLATESTACK" ]; then
@@ -45,7 +35,6 @@ function frontend() {
     linkedPath=" -v $DIR/../templatestack/template-ui/lib:/app/node_modules/template-ui/lib -v $DIR/../templatestack/template-tools/src:/app/node_modules/template-tools/src"
   fi
   docker run -d \
-    --net $APPNAME-network \
     --name $APPNAME-frontend \
     -p 8080:80 $linkedPath -v "$DIR/frontend/src:/app/src" \
     "$APPNAME-frontend"
@@ -60,30 +49,28 @@ function frontend-stop() {
 }
 
 function truffle() {
-  local useNetwork=""
-  local mountFolders=""
+  local extraDocker=""
+  local extraGanache=""
   if [ -z "$LOCAL_TRUFFLE" ]; then
-    useNetwork=" --network ganache "
+    extraDocker="$extraDocker --net $APPNAME-network -e GANACHE_HOST=$APPNAME-ganache "
+    extraGanache="$extraGanache --network ganache "
   fi
   # mount code if not running in CI mode
   if [ -z "$CI_JOB_ID" ]; then
-    mountFolders="$mountFolders -v $DIR/truffle/contracts:/app/contracts "
-    mountFolders="$mountFolders -v $DIR/truffle/migrations:/app/migrations "
-    mountFolders="$mountFolders -v $DIR/truffle/test:/app/test "
-    mountFolders="$mountFolders -v $DIR/truffle/build:/app/build "
+    extraDocker="$extraDocker -v $DIR/truffle/contracts:/app/contracts -v $DIR/truffle/migrations:/app/migrations -v $DIR/truffle/test:/app/test -v $DIR/truffle/build:/app/build"
   fi
-  docker run -ti --rm \
-    --net $APPNAME-network $mountFolders \
-    $APPNAME-truffle $useNetwork "$@"
+  docker run -ti --rm $extraDocker \
+    $APPNAME-truffle $extraGanache "$@" 
 }
 
 function ganache() {
+  docker network create $APPNAME-network || true
   docker run -d \
+    -p 8545:8545 \
     --net $APPNAME-network \
     --name $APPNAME-ganache \
-    -p 8545:8545 \
     --entrypoint "node_modules/.bin/ganache-cli" \
-    $APPNAME-truffle -a 10 --debug -d fixed "$@"
+    $APPNAME-truffle -a 10 --debug -d fixed -h 0.0.0.0 "$@"
 }
 
 function ganache-logs() {
@@ -92,6 +79,7 @@ function ganache-logs() {
 
 function ganache-stop() {
   docker rm -f $APPNAME-ganache || true
+  docker network rm $APPNAME-network || true
 }
 
 eval "$@"

@@ -14,3 +14,4 @@ RUN yarn install
 COPY . /app
 ENTRYPOINT ["node_modules/.bin/truffle"]
 CMD ["develop"]
+EXPOSE 8545
