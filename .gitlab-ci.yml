@@ -3,13 +3,12 @@ image: binocarlos/cibase:v6
 stages:
   - test
 
-test:
+test_truffle:
   stage: test
   variables:
     APPNAME: lottery-$CI_JOB_ID
   before_script:
-    - bash docker.sh build-truffle
-    - bash docker.sh network-create
+    - bash docker.sh build-truffle    
     - bash docker.sh ganache
   script:
     - bash docker.sh truffle compile
@@ -17,5 +16,4 @@ test:
     - bash docker.sh truffle test
   after_script:
     - bash docker.sh ganache-stop
-    - bash docker.sh network-delete
     
