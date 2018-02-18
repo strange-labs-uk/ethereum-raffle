@@ -5,6 +5,15 @@ test:
   stage: test
   variables:
     APPNAME: lottery-$CI_JOB_ID
+  before_script:
+    - bash docker.sh build-truffle
+    - bash docker.sh network-create
+    - bash docker.sh ganache
   script:
-    - echo $APPNAME
+    - bash docker.sh truffle compile
+    - bash docker.sh truffle migrate
+    - bash docker.sh truffle test
+  after_script:
+    - bash docker.sh ganache-stop
+    - bash docker.sh network-delete
     

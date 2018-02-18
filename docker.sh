@@ -56,34 +56,24 @@ function frontend-logs() {
 }
 
 function frontend-stop() {
-  docker rm -f $APPNAME-frontend
+  docker rm -f $APPNAME-frontend || true
 }
 
 function truffle() {
   local useNetwork=""
+  local mountFolders=""
   if [ -z "$LOCAL_TRUFFLE" ]; then
     useNetwork=" --network ganache "
   fi
-  docker run -ti --rm \
-    --net $APPNAME-network \
-    -v "$DIR/truffle/contracts:/app/contracts" \
-    -v "$DIR/truffle/migrations:/app/migrations" \
-    -v "$DIR/truffle/test:/app/test" \
-    -v "$DIR/truffle/build:/app/build" \
-    $APPNAME-truffle $useNetwork "$@"
-}
-
-function testsuite() {
-  local useNetwork=""
-  if [ -z "$LOCAL_TRUFFLE" ]; then
-    useNetwork=" --network ganache "
+  # mount code if not running in CI mode
+  if [ -z "$CI_JOB_ID" ]; then
+    mountFolders="$mountFolders -v $DIR/truffle/contracts:/app/contracts "
+    mountFolders="$mountFolders -v $DIR/truffle/migrations:/app/migrations "
+    mountFolders="$mountFolders -v $DIR/truffle/test:/app/test "
+    mountFolders="$mountFolders -v $DIR/truffle/build:/app/build "
   fi
   docker run -ti --rm \
-    --net $APPNAME-network \
-    -v "$DIR/truffle/contracts:/app/contracts" \
-    -v "$DIR/truffle/migrations:/app/migrations" \
-    -v "$DIR/truffle/test:/app/test" \
-    -v "$DIR/truffle/build:/app/build" \
+    --net $APPNAME-network $mountFolders \
     $APPNAME-truffle $useNetwork "$@"
 }
 
@@ -93,7 +83,7 @@ function ganache() {
     --name $APPNAME-ganache \
     -p 8545:8545 \
     --entrypoint "node_modules/.bin/ganache-cli" \
-    $APPNAME-truffle -a 10 --debug -d hello "$@"
+    $APPNAME-truffle -a 10 --debug -d fixed "$@"
 }
 
 function ganache-logs() {
@@ -101,7 +91,7 @@ function ganache-logs() {
 }
 
 function ganache-stop() {
-  docker rm -f $APPNAME-ganache
+  docker rm -f $APPNAME-ganache || true
 }
 
 eval "$@"
