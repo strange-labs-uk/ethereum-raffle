@@ -1,17 +1,15 @@
 .PHONY: linked
-linked: ; docker-compose -f docker-compose.yml -f docker-compose.linked.yml up
+linked:
+	bash dev.sh linked
 
 .PHONY: start
-start: ; docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+start:
+	bash dev.sh start
 
 .PHONY: build
 build:
-	docker-compose -f docker-compose.yml -f docker-compose.linked.yml build
+	bash dev.sh build
 
-.PHONY: frontend.cli
-frontend.cli:
-	docker exec -ti ethereum_lottery_frontend bash
-
-.PHONY: clean
-clean:
-	docker rm -f ethereum_lottery_frontend 
+.PHONY: reset
+reset:
+	bash dev.sh reset
