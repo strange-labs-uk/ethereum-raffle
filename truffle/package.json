@@ -9,7 +9,9 @@
   "author": "Bharat Kunwar",
   "license": "MIT",
   "dependencies": {
+    "ganache-cli": "^6.0.3",
     "leftpad": "^0.0.1",
+    "truffle": "^4.0.6",
     "web3-utils": "^1.0.0-beta.29",
     "zeppelin-solidity": "^1.5.0"
   },

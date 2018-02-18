@@ -12,5 +12,5 @@ COPY ./package.json /app/package.json
 COPY ./yarn.lock /app/yarn.lock
 RUN yarn install
 COPY . /app
-ENTRYPOINT ["truffle"]
+ENTRYPOINT ["node_modules/.bin/truffle"]
 CMD ["develop"]
