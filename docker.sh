@@ -59,7 +59,10 @@ function truffle() {
   if [ -z "$CI_JOB_ID" ]; then
     extraDocker="$extraDocker -v $DIR/truffle/contracts:/app/contracts -v $DIR/truffle/migrations:/app/migrations -v $DIR/truffle/test:/app/test -v $DIR/truffle/build:/app/build"
   fi
-  docker run -ti --rm $extraDocker \
+  if [ -t 1 ] ; then
+    extraDocker="$extraDocker -ti"
+  fi
+  docker run --rm $extraDocker \
     $APPNAME-truffle $extraGanache "$@" 
 }
 
