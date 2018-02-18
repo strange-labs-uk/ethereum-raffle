@@ -1,3 +1,5 @@
+image: binocarlos/cibase:v6
+
 stages:
   - test
 
