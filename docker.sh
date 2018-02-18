@@ -6,16 +6,34 @@ export DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export APPNAME=${APPNAME:="lottery"}
 export LINK_TEMPLATESTACK=${LINK_TEMPLATESTACK:=""}
 
+function build-truffle() {
+  docker build -t $APPNAME-truffle truffle
+}
+
+function build-frontend() {
+  docker build -t $APPNAME-frontend frontend
+}
+
+function build-bot() {
+  docker build -t $APPNAME-bot bot
+}
+
+function build() {
+  build-truffle
+  build-frontend
+  build-bot
+}
+
 function network-create() {
   if [ -z "$(docker network ls | grep $APPNAME-network)" ]; then
     docker network create $APPNAME-network
   fi
 }
 
-function build() { 
-  docker build -t $APPNAME-frontend frontend
-  docker build -t $APPNAME-truffle truffle
-  docker build -t $APPNAME-bot bot
+function network-delete() {
+  if [ -n "$(docker network ls | grep $APPNAME-network)" ]; then
+    docker network rm $APPNAME-network
+  fi
 }
 
 function frontend() {
@@ -28,9 +46,17 @@ function frontend() {
   fi
   docker run -d \
     --net $APPNAME-network \
-    --name frontend \
+    --name $APPNAME-frontend \
     -p 8080:80 $linkedPath -v "$DIR/frontend/src:/app/src" \
     "$APPNAME-frontend"
+}
+
+function frontend-logs() {
+  docker logs -f $APPNAME-frontend
+}
+
+function frontend-stop() {
+  docker rm -f $APPNAME-frontend
 }
 
 function truffle() {
@@ -47,17 +73,35 @@ function truffle() {
     $APPNAME-truffle $useNetwork "$@"
 }
 
+function testsuite() {
+  local useNetwork=""
+  if [ -z "$LOCAL_TRUFFLE" ]; then
+    useNetwork=" --network ganache "
+  fi
+  docker run -ti --rm \
+    --net $APPNAME-network \
+    -v "$DIR/truffle/contracts:/app/contracts" \
+    -v "$DIR/truffle/migrations:/app/migrations" \
+    -v "$DIR/truffle/test:/app/test" \
+    -v "$DIR/truffle/build:/app/build" \
+    $APPNAME-truffle $useNetwork "$@"
+}
+
 function ganache() {
   docker run -d \
     --net $APPNAME-network \
-    --name ganache \
+    --name $APPNAME-ganache \
     -p 8545:8545 \
     --entrypoint "node_modules/.bin/ganache-cli" \
     $APPNAME-truffle -a 10 --debug -d hello "$@"
 }
 
 function ganache-logs() {
-  docker logs -f ganache
+  docker logs -f $APPNAME-ganache
+}
+
+function ganache-stop() {
+  docker rm -f $APPNAME-ganache
 }
 
 eval "$@"

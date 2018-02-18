@@ -1,0 +1,10 @@
+stages:
+  - test
+
+test:
+  stage: test
+  variables:
+    APPNAME: lottery-$CI_JOB_ID
+  script:
+    - echo $APPNAME
+    
