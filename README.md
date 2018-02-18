@@ -16,7 +16,6 @@ You need:
 #### install
 
 ```bash
-bash docker.sh network-create
 bash docker.sh build
 ```
 
