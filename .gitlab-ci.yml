@@ -8,7 +8,8 @@ test_truffle:
   variables:
     APPNAME: lottery-$CI_JOB_ID
   before_script:
-    - bash docker.sh build-truffle    
+    - bash docker.sh build-truffle
+    - bash docker.sh ganache-stop
     - bash docker.sh ganache
   script:
     - bash docker.sh truffle test
