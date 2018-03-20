@@ -91,6 +91,7 @@ contract('HashKeyRaffle', function (accounts) {
 
     if(process.env.DEBUG) {
 
+      console.log('[newGame]')
       console.log(JSON.stringify({
         price,
         secret,
@@ -112,6 +113,21 @@ contract('HashKeyRaffle', function (accounts) {
       fees,      
       { from: account, gas }
     )
+  }
+
+  async function playGame(t, props = {}) {
+
+    if(process.env.DEBUG) {
+      console.log('[playGame]')
+      console.log(JSON.stringify(props, null, 4))      
+    }
+
+    const playTx = await t.lottery.play({
+      from: props.from,
+      value: props.value,
+      gasPrice: props.gasPrice
+    }).should.be.fulfilled;
+    return playTx
   }
 
   async function addSinglePlayer(t, index, ticketCount) {
@@ -209,7 +225,7 @@ contract('HashKeyRaffle', function (accounts) {
   });
 
   it('should not let someone play where there is no game', async function () {
-    await this.lottery.play({
+    await playGame(this, {
       value: ticketPrice(1),
       from: accounts[1],
     }).should.be.rejectedWith(EVMRevert);
@@ -236,7 +252,7 @@ contract('HashKeyRaffle', function (accounts) {
   it('should not allow play before the game has started', async function () {
     await newGame(this, {}).should.be.fulfilled;
     await increaseTimeTo(this.startTime - duration.seconds(1));
-    await this.lottery.play({
+    await playGame(this, {
       from: accounts[1],
       value: ticketPrice(1)
     }).should.be.rejectedWith(EVMRevert);
@@ -245,7 +261,7 @@ contract('HashKeyRaffle', function (accounts) {
   it('should not allow play once the game has ended', async function () {
     await newGame(this, {}).should.be.fulfilled;
     await increaseTimeTo(this.endTime + duration.seconds(1));
-    await this.lottery.play({
+    await playGame(this, {
       from: accounts[1],
       value: ticketPrice(1)
     }).should.be.rejectedWith(EVMRevert);
@@ -254,7 +270,7 @@ contract('HashKeyRaffle', function (accounts) {
   it('should not allow play once the game has ended', async function () {
     await newGame(this, {}).should.be.fulfilled;
     await increaseTimeTo(this.endTime + duration.seconds(1));
-    await this.lottery.play({
+    await playGame(this, {
       from: accounts[1],
       value: ticketPrice(1)
     }).should.be.rejectedWith(EVMRevert);
@@ -365,7 +381,7 @@ contract('HashKeyRaffle', function (accounts) {
     await newGame(this, {}).should.be.fulfilled;
     await increaseTimeTo(this.startTime + duration.hours(1));
     const beforePlayBalance = getAccountBalances([1])[0]
-    const playTx = await this.lottery.play({
+    const playTx = await playGame(this, {
       from: accounts[1],
       value: ticketPrice(1),
       gasPrice: GAS_PRICE
@@ -403,7 +419,7 @@ contract('HashKeyRaffle', function (accounts) {
   it('should emit a TicketsPurchased event', async function () {
     await newGame(this, {}).should.be.fulfilled;
     await increaseTimeTo(this.startTime + duration.hours(1));
-    const playTx = await this.lottery.play({
+    const playTx = await playGame(this, {
       from: accounts[1],
       value: ticketPrice(1)
     }).should.be.fulfilled;
@@ -423,7 +439,7 @@ contract('HashKeyRaffle', function (accounts) {
     }).should.be.fulfilled;
     await increaseTimeTo(this.startTime + duration.hours(1));
     const beforePlayBalance = getAccountBalances([1])[0]
-    const playTx = await this.lottery.play({
+    const playTx = await playGame(this, {
       from: accounts[1],
       value: ticketPrice(15),
       gasPrice: GAS_PRICE
@@ -447,7 +463,7 @@ contract('HashKeyRaffle', function (accounts) {
       price: ticketPrice(10)
     }).should.be.fulfilled;
     await increaseTimeTo(this.startTime + duration.hours(1));
-    const playTx = await this.lottery.play({
+    const playTx = await playGame(this, {
       from: accounts[1],
       value: ticketPrice(15)
     }).should.be.fulfilled;
@@ -470,7 +486,7 @@ contract('HashKeyRaffle', function (accounts) {
     }).should.be.fulfilled;
     await increaseTimeTo(this.startTime + duration.hours(1));
     const beforePlayBalance = getAccountBalances([1])[0]
-    const playTx = await this.lottery.play({
+    const playTx = await playGame(this, {
       from: accounts[1],
       value: ticketPrice(10),
       gasPrice: GAS_PRICE

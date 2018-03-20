@@ -32,7 +32,7 @@ contract HashKeyRaffle is Ownable {
     bool refunded;          // did the owner not submit the secretKey in time?
     address winner;         // record the final winning address
     uint256 prizePaid;      // record how much the winner was paid
-    uint256 feesPaid;       // record what fees were taken
+    uint256 feesPaid;       // record what fees were taken - this is paid to the owner - its a percent
   }
 
   struct GameEntries

@@ -19,6 +19,7 @@ Now you can interact with the raffle contract. Lets send wei to the raffle DApp 
   raf = HashKeyRaffle.deployed()
   raf.then(i=>i.buyTokens(web3.eth.coinbase,{value:10000,gas:1721975,gasPrice: 1000000})).then(i=>i.logs[1].args)
 
+
 Check the token balance balance:
   
   tok = raf.token().then(address=>MintableToken.at(address))
@@ -46,3 +47,4 @@ If you make changes to the contract that you want to propagate to the web interf
     
     deploy --reset
 
+This gives us a test blockchain that behaves just like `truffle develop`
