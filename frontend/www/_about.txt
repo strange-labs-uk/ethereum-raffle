@@ -1,3 +1,0 @@
-put static assets (like images here)
-
-they will be merged into the root output folder of the build (so can be referenced by apps)

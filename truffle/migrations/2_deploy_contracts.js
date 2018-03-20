@@ -1,5 +1,5 @@
-var HashKeyLottery = artifacts.require("./HashKeyLottery.sol");
+var HashKeyRaffle = artifacts.require("./HashKeyRaffle.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(HashKeyLottery);
+  deployer.deploy(HashKeyRaffle);
 };
