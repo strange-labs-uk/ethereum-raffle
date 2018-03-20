@@ -10,13 +10,23 @@ cd ethereum-lottery
 bash docker.sh build
 ```
 
-#### start blockchain
+## test contracts
 
-[Ganache](https://github.com/trufflesuite/ganache-cli/) gives us a test blockchain to work with:
+To get a truffle develop environment with mounted code:
 
 ```bash
-bash docker.sh ganache
-bash docker.sh ganache-logs
+bash docker.sh develop
+truffle(develop)> compile
+truffle(develop)> migrate
+truffle(develop)> test
+```
+
+## start blockchain
+
+To start a ganache-cli server that our frontend can connect to:
+
+```bash
+bash docker.sh ganache-start
 ```
 
 #### migrate contracts
@@ -36,22 +46,6 @@ bash docker.sh frontend
 
 You can now view the frontend on [http://127.0.0.1:8080](http://127.0.0.1:8080)
 
-#### test
-
-```bash
-bash docker.sh truffle test
-```
-
-If you want to run your tests faster - you can use `truffle develop`:
-
-```bash
-export LOCAL_TRUFFLE=1
-bash docker.sh truffle develop
-truffle(develop)> compile
-truffle(develop)> migrate
-truffle(develop)> test
-```
-
 #### hot-reloading for templatestack
 
 The frontend uses some stuff from [templatestack](https://github.com/binocarlos/templatestack).
@@ -63,3 +57,17 @@ export LINK_TEMPLATESTACK=1
 bash docker.sh frontend
 ```
 
+#### CI testing
+
+The `.gitlab-ci.yml` file works differently in that it:
+
+ * starts a blockchain server (Ganache)
+ * runs 
+
+[Ganache](https://github.com/trufflesuite/ganache-cli/) gives us a test blockchain to work with:
+
+```bash
+bash docker.sh ganache
+```
+
+This gives us a test blockchain that behaves just like `truffle develop`

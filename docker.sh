@@ -9,15 +9,15 @@ export CI_JOB_ID=${CI_JOB_ID:=""}
 export LOCAL_TRUFFLE=${LOCAL_TRUFFLE:=""}
 
 function build-truffle() {
-  docker build -t $APPNAME-truffle truffle
+  docker build -t $APPNAME-truffle -f Dockerfile.truffle .
 }
 
 function build-frontend() {
-  docker build -t $APPNAME-frontend frontend
+  docker build -t $APPNAME-frontend -f Dockerfile.frontend .
 }
 
 function build-bot() {
-  docker build -t $APPNAME-bot bot
+  docker build -t $APPNAME-bot -f Dockerfile.bot .
 }
 
 function build() {
@@ -73,6 +73,11 @@ function truffle() {
     $APPNAME-truffle $extraGanache "$@" 
 }
 
+function develop() {
+  export LOCAL_TRUFFLE=1
+  truffle develop
+}
+
 # build/deploy the contracts then copy the build folder into the frontend Docker context
 function migrate() {
   rm -rf $DIR/frontend/www/build
@@ -84,8 +89,9 @@ function migrate() {
   docker rm -f $APPNAME-truffle || true
 }
 
-function ganache() {
+function ganache-start() {
   docker network create $APPNAME-network || true
+  docker rm -f --name $APPNAME-ganache || true
   docker run -d \
     -p 8545:8545 \
     --net $APPNAME-network \
