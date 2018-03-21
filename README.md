@@ -1,33 +1,21 @@
 # Ethereum HashKeyRaffle Demo
 
-Yet another prototype of a `HashKeyRaffle` DApp which is currently just a renamed fork of [SampleCrowdsale.sol](https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/examples/SampleCrowdsale.sol) obtained from the examples shared by [OpenZeppelin](https://github.com/OpenZeppelin/zeppelin-solidity) (an ERC20 token template).
+This repository is yet another prototype of a raffle DApp which is currently just a renamed fork of [SampleCrowdsale.sol](https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/examples/SampleCrowdsale.sol) obtained from the examples shared by [OpenZeppelin](https://github.com/OpenZeppelin/zeppelin-solidity) (an ERC20 token template).
+
+    git clone https://github.com/strange-labs-uk/ethereum-raffle
+
+## Truffle
 
 To deploy the `HashKeyRaffle` DApp on a truffle server, do the following:
 
-  git clone https://github.com/strange-labs-uk/ethereum-raffle
-  cd ethereum-raffle/truffle
-  npm install -g truffle
-  npm install
-  truffle develop
+    npm install -g truffle
+    cd ethereum-raffle/truffle
+    npm install
+    truffle develop
 
 In the `truffle(develop)>` console:
 
-  deploy --reset
-
-Now you can interact with the raffle contract. Lets send wei to the raffle DApp in exchange for tokens and simultaneous check the total number issued:
-  
-  raf = HashKeyRaffle.deployed()
-  raf.then(i=>i.buyTokens(web3.eth.coinbase,{value:10000,gas:1721975,gasPrice: 1000000})).then(i=>i.logs[1].args)
-
-
-Check the token balance balance:
-  
-  tok = raf.token().then(address=>MintableToken.at(address))
-  tok.then(instance=>instance.balanceOf(web3.eth.coinbase))
-
-Run draw once the raffle time is up:
-
-  raf.then(i=>i.runDraw()).then(i=>i.logs[0].args)
+    migrate --reset
 
 The best thing to do to ensure that the contract is functioning as expected seems to be to build unit tests into `test/HashKeyRaffle.test.js` and run `test` inside `truffle(develop)>` console.
 
@@ -42,9 +30,3 @@ To serve it:
     npm start
 
 Then browse to http://localhost:3000.
-
-If you make changes to the contract that you want to propagate to the web interface, reset your deployed contract on the `truffle(develop)>` console and refresh the web page:
-    
-    deploy --reset
-
-This gives us a test blockchain that behaves just like `truffle develop`
