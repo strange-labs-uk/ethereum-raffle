@@ -64,7 +64,7 @@ function updateAccountBalance() {
             console.log('Error retrieving balance');
         } else {
             self.balance = web3.toDecimal(result);
-            updateUI('account_balance', 'You (' + self.account + ') own ' + self.balance + ' tickets.');            
+            updateUI('account_balance', '<span title="' + self.account + '">You own ' + self.balance + ' tickets.</span>');
         }
     });
 }

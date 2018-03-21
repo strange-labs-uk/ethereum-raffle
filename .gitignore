@@ -3,3 +3,4 @@ node_modules/
 README.html
 .DS_Store
 .python-version
+*.swp
