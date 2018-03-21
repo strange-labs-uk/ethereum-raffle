@@ -45,28 +45,26 @@ function updateCost() {
 function initRaffle() {
     $.getJSON("/ws/HashKeyRaffle.json", function(def) {
         // Retrieved the contract from the local geth node
-        console.log(def)
         self.Raffle = web3.eth.contract(def['abi'])
                         .at(def.networks[self.network_id].address);
-        self.Raffle.currentGameIndex(function(error,result){
-          if (error) {
-            console.log('Error retrieving current game index');
-          } else {
-            self.currentGameIndex = result;
-          }
+        self.Raffle.currentGameIndex( function(error, result){
+            if (error) {
+                console.log('Error retrieving current game index');
+            } else {
+                self.currentGameIndex = result;
+            }
         });
     });
 }
 
 function updateAccountBalance() {
     self.account = web3.eth.accounts[0];
-    self.Raffle.balanceOf(self.account,function(error,result){
-        if (error){
-            console.log("MintableToken.balanceOf fail");
-            console.log(error);
+    self.Raffle.getBalance(self.currentGameIndex+1, self.account, function(error, result){
+        if (error) {
+            console.log('Error retrieving balance');
         } else {
-            console.log("MintableToken.balanceOf success");
-            updateUI('account_balance', 'You (' + self.account + ') own ' + result + ' tickets.');            
+            self.balance = web3.toDecimal(result);
+            updateUI('account_balance', 'You (' + self.account + ') own ' + self.balance + ' tickets.');            
         }
     });
 }

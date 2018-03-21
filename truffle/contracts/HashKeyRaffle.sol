@@ -535,4 +535,14 @@ contract HashKeyRaffle is Ownable {
     }
     return (entries.players, _balances);
   }
+
+  /**
+   * @dev return the balance of an address
+   */
+  function getBalance(uint gameIndex, address playerAddress) public view returns (uint256) {
+    require(gameIndex > 0);
+    GameEntries storage entries = games[gameIndex].entries;
+    uint256 _balance = entries.balances[playerAddress];
+    return _balance;
+  }
 }
