@@ -99,7 +99,7 @@ contract('HashKeyRaffle', function (accounts) {
         drawPeriod,
         start,
         end,
-        fees,      
+        fees,
         settings: { from: account, gas }
       }, null, 4))
     }
@@ -110,7 +110,7 @@ contract('HashKeyRaffle', function (accounts) {
       drawPeriod,
       start,
       end,
-      fees,      
+      fees,
       { from: account, gas }
     )
   }
@@ -119,7 +119,7 @@ contract('HashKeyRaffle', function (accounts) {
 
     if(process.env.DEBUG) {
       console.log('[playGame]')
-      console.log(JSON.stringify(props, null, 4))      
+      console.log(JSON.stringify(props, null, 4))
     }
 
     const playTx = await t.lottery.play({
@@ -184,13 +184,13 @@ contract('HashKeyRaffle', function (accounts) {
   });
 
   it('should deny an end time before a start time', async function () {
-    await newGame(this, {      
+    await newGame(this, {
       end: this.startTime - duration.weeks(1),
     }).should.be.rejectedWith(EVMRevert);
   });
 
   it('should deny an empty price', async function () {
-    await newGame(this, {      
+    await newGame(this, {
       price: 0,
     }).should.be.rejectedWith(EVMRevert);
   });
@@ -209,19 +209,19 @@ contract('HashKeyRaffle', function (accounts) {
 
   it('should deny a new game when an existing one exists but has not started', async function () {
     await newGame(this, {}).should.be.fulfilled;
-    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
+    await newGame(this, {}).should.be.rejectedWith(EVMRevert);
   });
 
   it('should deny a new game when an existing one has started but not finished', async function () {
     await newGame(this, {}).should.be.fulfilled;
     await increaseTimeTo(this.startTime + duration.hours(1));
-    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
+    await newGame(this, {}).should.be.rejectedWith(EVMRevert);
   });
 
   it('should deny a new game when an existing has finished but not complete', async function () {
     await newGame(this, {}).should.be.fulfilled;
     await increaseTimeTo(this.afterEndTime);
-    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
+    await newGame(this, {}).should.be.rejectedWith(EVMRevert);
   });
 
   it('should not let someone play where there is no game', async function () {
@@ -246,7 +246,7 @@ contract('HashKeyRaffle', function (accounts) {
       complete: 0,
       drawPeriod: this.drawPeriod,
     })
-    
+
   });
 
   it('should not allow play before the game has started', async function () {
