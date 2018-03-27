@@ -139,6 +139,7 @@ contract('HashKeyRaffle', function (accounts) {
     }).should.be.fulfilled;
   }
 
+  // start at account 1 since account 0 is the owner
   async function addThreePlayers(t, ticketCounts) {
     ticketCounts = ticketCounts || []
     await newGame(t, {}).should.be.fulfilled;
