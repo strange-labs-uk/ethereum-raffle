@@ -331,7 +331,7 @@ contract('HashKeyRaffle', function (accounts) {
       from: accounts[0],
     }).should.be.rejectedWith(EVMRevert);
   });
-  
+
   it('should reject a draw with the wrong secret', async function () {
     await addThreePlayers(this)
     await increaseTimeTo(this.endTime + duration.hours(1));
@@ -352,7 +352,7 @@ contract('HashKeyRaffle', function (accounts) {
 
     await addThreePlayers(this)
     await increaseTimeTo(this.endTime + duration.hours(1));
-    
+
     await this.lottery.draw(this.secret, {
       from: accounts[0],
     }).should.be.fulfilled;
@@ -406,7 +406,7 @@ contract('HashKeyRaffle', function (accounts) {
     checkGasPaid.should.equal(checkCalcualtedGasPaid)
   });
 
-  
+
   it('should emit a GameCreated event', async function () {
     const createTx = await newGame(this, {}).should.be.fulfilled;
     const event = createTx.logs.find(e => e.event === 'GameCreated');
