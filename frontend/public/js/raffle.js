@@ -27,7 +27,6 @@ function init() {
                 }
             });
         }    
-
     } else {
         console.log('No web3? You should consider trying MetaMask!')
     }
@@ -64,13 +63,13 @@ function updateAccountBalance() {
             console.log('Error retrieving balance');
         } else {
             self.balance = web3.toDecimal(result);
-            updateUI('account_balance', '<span title="' + self.account + '">You own ' + self.balance + ' tickets.</span>');
+            updateUI('account_balance', '<a title="' + self.account + '">You own ' + self.balance + ' tickets.</a>');
         }
     });
 }
 
 function updateEthRaised() {
-    self.Raffle.weiRaised.call(function(error, result) {
+    self.Raffle.getEthRaised(self.currentGameIndex+1, function(error, result) {
         if (error) {
             console.log("Raffle.weiRaised fail");
             console.log(error);

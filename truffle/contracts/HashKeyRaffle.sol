@@ -523,6 +523,14 @@ contract HashKeyRaffle is Ownable {
   }
 
   /**
+   * @dev returns the number of tickets bought
+   * @return uint
+   */
+  function getNumberOfTickets(uint gameIndex) public view returns (uint) {
+    return getTickets(gameIndex).length;
+  }
+
+  /**
    * @dev return two arrays of address -> game balance
    */
   function getBalances(uint gameIndex) public view returns (address[], uint256[]) {

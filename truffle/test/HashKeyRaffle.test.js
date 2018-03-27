@@ -147,6 +147,15 @@ contract('HashKeyRaffle', function (accounts) {
     await addSinglePlayer(t, 3, ticketCounts[2])
   }
 
+  const checkTickets = [
+    accounts[1],
+    accounts[2],
+    accounts[2],
+    accounts[3],
+    accounts[3],
+    accounts[3],
+  ]
+
   const getAccountBalances = (ids) => ids.map(id => web3.eth.getBalance(accounts[id]).toNumber())
   const toEth = v => web3.fromWei(v, "ether")
 
@@ -303,17 +312,17 @@ contract('HashKeyRaffle', function (accounts) {
 
     const tickets = await this.lottery.getTickets(1);
 
-    const checkTickets = [
-      accounts[1],
-      accounts[2],
-      accounts[2],
-      accounts[3],
-      accounts[3],
-      accounts[3],
-    ]
-
     tickets.should.deep.equal(checkTickets)
   });
+
+  it('should get the number of tickets for all players', async function () {
+    await addThreePlayers(this)
+
+    const numTickets = await this.lottery.getNumberOfTickets(1);
+    numTickets.toNumber().should.equal(checkTickets.length)
+  });
+
+
 
   it('should get the draw length', async function () {
     await addThreePlayers(this)
