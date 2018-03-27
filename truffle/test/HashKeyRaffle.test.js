@@ -299,6 +299,14 @@ contract('HashKeyRaffle', function (accounts) {
     checkBalance(2)
   });
 
+  it('should get the balance for a single player', async function () {
+    await addThreePlayers(this)
+
+    const balance = await this.lottery.getBalance(1, accounts[1]);
+
+    balance.toNumber().should.equal(1)
+  });
+
   it('should get the tickets for all players', async function () {
     await addThreePlayers(this)
 
