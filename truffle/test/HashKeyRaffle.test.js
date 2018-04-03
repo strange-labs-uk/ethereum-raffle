@@ -32,6 +32,7 @@ const convertGameSettingsData = (arr) => {
     'end',
     'complete',
     'drawPeriod',
+    'minPlayers',
   ].reduce((all, f, i) => {
     all[f] = arr[i].toNumber()
     return all
@@ -86,6 +87,7 @@ contract('HashKeyRaffle', function (accounts) {
     const start = props.start || t.startTime
     const end = props.end || t.endTime
     const drawPeriod = props.drawPeriod || t.drawPeriod
+    const minPlayers = props.minPlayers || 1
     const account = props.account || accounts[0]
     const gas = props.gas || "4200000"
 
@@ -100,6 +102,7 @@ contract('HashKeyRaffle', function (accounts) {
         start,
         end,
         fees,
+        minPlayers,
         settings: { from: account, gas }
       }, null, 4))
     }
@@ -111,6 +114,7 @@ contract('HashKeyRaffle', function (accounts) {
       start,
       end,
       fees,
+      minPlayers,
       { from: account, gas }
     )
   }
@@ -174,7 +178,7 @@ contract('HashKeyRaffle', function (accounts) {
     this.lottery = await HashKeyRaffle.new();
     this.secret = 'apples'
   });
-
+/*
   it('should create the contract and be owned by account0', async function () {
     this.lottery.should.exist;
     const owner = await this.lottery.owner()
@@ -255,6 +259,7 @@ contract('HashKeyRaffle', function (accounts) {
       end: this.endTime,
       complete: 0,
       drawPeriod: this.drawPeriod,
+      minPlayers: 1,
     })
 
   });
@@ -370,7 +375,6 @@ contract('HashKeyRaffle', function (accounts) {
 
     await addThreePlayers(this)
     await increaseTimeTo(this.endTime + duration.hours(1));
-
     await this.lottery.draw(this.secret, {
       from: accounts[0],
     }).should.be.fulfilled;
@@ -519,5 +523,35 @@ contract('HashKeyRaffle', function (accounts) {
     // we should have got at least 9 ticket prices back (because I can't be bother to do the gas code like above)
     afterRefundBalance.should.be.above(beforePlayBalance -parseInt(ticketPrice(1)))
   });
+*/
+  it('should refund if minPlayers is not met', async function () {
+
+    const beforePlayBalance = getAccountBalances([1])[0]
+    const price = ticketPrice(1)
+    await newGame(this, {
+      minPlayers: 15
+    }).should.be.fulfilled;
+    await addSinglePlayer(this, 1, 3)
+    await addSinglePlayer(this, 2, 3)
+    await addSinglePlayer(this, 3, 3)
+    await increaseTimeTo(this.endTime + duration.hours(1));
+    const gameSettings = convertGameSettingsData(await this.lottery.getGameSettings(1))
+    console.dir(gameSettings)
+
+    await this.lottery.draw(this.secret, {
+      from: accounts[0],
+    }).should.be.fulfilled;
+    /*
+    const afterPlayBalance = getAccountBalances([1])[0]
+
+    console.dir({
+      beforePlayBalance,
+      afterPlayBalance,
+      price,
+    })*/
+
+    
+
+  })
 
 });

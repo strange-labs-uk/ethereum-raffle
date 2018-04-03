@@ -14,6 +14,7 @@ contract HashKeyRaffle is Ownable {
     uint feePercent;        // what percentage the owner will take as fees
     uint start;             // timestamp of game start
     uint end;               // timestamp of game end
+    uint minPlayers;        // min number of players
     uint complete;          // record what time the game was paid out or refunded - effectively closed
     uint drawPeriod;        // how many seconds the owner has to call draw after end
                             // triggers a refund is this time is passed and draw has not been called
@@ -57,7 +58,7 @@ contract HashKeyRaffle is Ownable {
     GameEntries entries;
   }
 
-  event GameCreated(uint gameIndex, uint256 price, uint feePercent, uint start, uint end);
+  event GameCreated(uint gameIndex, uint256 price, uint feePercent, uint start, uint end, uint minPlayers);
   event TicketsPurchased(uint gameIndex, address player, uint256 balance, uint256 totalBalance);
   event OverspendReturned(uint gameIndex, address player, uint256 amount);
   event DrawComplete(uint gameIndex, address winningPlayer, uint256 randomNumber, uint256 numTickets, uint winningAmount);
@@ -242,7 +243,7 @@ contract HashKeyRaffle is Ownable {
    * @return uint256: the id of the new game
    */
 
-  function newGame(uint256 _price, bytes32 _secretKeyHash, uint _drawPeriod, uint _start, uint _end, uint _feePercent)
+  function newGame(uint256 _price, bytes32 _secretKeyHash, uint _drawPeriod, uint _start, uint _end, uint _feePercent, uint _minPlayers)
     public
     onlyOwner
     canCreateGame()
@@ -259,6 +260,7 @@ contract HashKeyRaffle is Ownable {
     require(_price > 0);
     require(_drawPeriod > 0);
     require(_feePercent < 100);
+    require(_minPlayers > 0);
 
     // draw period cannot be more than 7 days to prevent everything being
     // locked up for ages - this means the maximum time folks would wait for refunds
@@ -274,12 +276,13 @@ contract HashKeyRaffle is Ownable {
     g.settings.feePercent = _feePercent;
     g.settings.start = _start;
     g.settings.end = _end;
+    g.settings.minPlayers = _minPlayers;
     g.settings.drawPeriod = _drawPeriod;
     g.security.secretKeyHash = _secretKeyHash;
 
     allGames.push(g.index);
 
-    GameCreated(g.index, g.settings.price, g.settings.feePercent, g.settings.start, g.settings.end);
+    GameCreated(g.index, g.settings.price, g.settings.feePercent, g.settings.start, g.settings.end, g.settings.minPlayers);
 
     return g.index;
   }
@@ -296,6 +299,7 @@ contract HashKeyRaffle is Ownable {
   {
     GameSettings storage settings = games[currentGameIndex].settings;
     GameSecurity storage security = games[currentGameIndex].security;
+    GameEntries storage entries = games[currentGameIndex].entries;
     GameResults storage results = games[currentGameIndex].results;
 
     // we want at least 2 minutes between the game ending and the draw
@@ -315,7 +319,12 @@ contract HashKeyRaffle is Ownable {
     security.secretKey = _secretKey;
     security.lastBlockHash = block.blockhash(block.number - 1);
 
-    if(numTickets > 0) {
+    uint256 numberOfPlayers = entries.players.length;
+
+    if(numberOfPlayers < settings.minPlayers) {
+      refundAll();
+    }
+    else if(numTickets > 0) {
       uint256 winningIndex = finalNumber % numTickets;
       address winningAddress = drawAddresses[winningIndex];
       uint256 totalPot = settings.price.mul(numTickets);
@@ -457,7 +466,7 @@ contract HashKeyRaffle is Ownable {
   /**
    * @dev return the base settings for the game
    */
-  function getGameSettings(uint gameIndex) public view returns (uint256, uint, uint, uint, uint, uint) {
+  function getGameSettings(uint gameIndex) public view returns (uint256, uint, uint, uint, uint, uint, uint) {
     GameSettings storage settings = games[gameIndex].settings;
     return (
       settings.price,
@@ -465,7 +474,8 @@ contract HashKeyRaffle is Ownable {
       settings.start,
       settings.end,
       settings.complete,
-      settings.drawPeriod
+      settings.drawPeriod,
+      settings.minPlayers
     );
   }
 
