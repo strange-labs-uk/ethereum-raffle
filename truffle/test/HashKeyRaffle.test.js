@@ -99,7 +99,7 @@ contract('HashKeyRaffle', function (accounts) {
         drawPeriod,
         start,
         end,
-        fees,      
+        fees,
         settings: { from: account, gas }
       }, null, 4))
     }
@@ -110,7 +110,7 @@ contract('HashKeyRaffle', function (accounts) {
       drawPeriod,
       start,
       end,
-      fees,      
+      fees,
       { from: account, gas }
     )
   }
@@ -119,7 +119,7 @@ contract('HashKeyRaffle', function (accounts) {
 
     if(process.env.DEBUG) {
       console.log('[playGame]')
-      console.log(JSON.stringify(props, null, 4))      
+      console.log(JSON.stringify(props, null, 4))
     }
 
     const playTx = await t.lottery.play({
@@ -139,6 +139,7 @@ contract('HashKeyRaffle', function (accounts) {
     }).should.be.fulfilled;
   }
 
+  // start at account 1 since account 0 is the owner
   async function addThreePlayers(t, ticketCounts) {
     ticketCounts = ticketCounts || []
     await newGame(t, {}).should.be.fulfilled;
@@ -146,6 +147,15 @@ contract('HashKeyRaffle', function (accounts) {
     await addSinglePlayer(t, 2, ticketCounts[1])
     await addSinglePlayer(t, 3, ticketCounts[2])
   }
+
+  const checkTickets = [
+    accounts[1],
+    accounts[2],
+    accounts[2],
+    accounts[3],
+    accounts[3],
+    accounts[3],
+  ]
 
   const getAccountBalances = (ids) => ids.map(id => web3.eth.getBalance(accounts[id]).toNumber())
   const toEth = v => web3.fromWei(v, "ether")
@@ -184,13 +194,13 @@ contract('HashKeyRaffle', function (accounts) {
   });
 
   it('should deny an end time before a start time', async function () {
-    await newGame(this, {      
+    await newGame(this, {
       end: this.startTime - duration.weeks(1),
     }).should.be.rejectedWith(EVMRevert);
   });
 
   it('should deny an empty price', async function () {
-    await newGame(this, {      
+    await newGame(this, {
       price: 0,
     }).should.be.rejectedWith(EVMRevert);
   });
@@ -209,19 +219,19 @@ contract('HashKeyRaffle', function (accounts) {
 
   it('should deny a new game when an existing one exists but has not started', async function () {
     await newGame(this, {}).should.be.fulfilled;
-    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
+    await newGame(this, {}).should.be.rejectedWith(EVMRevert);
   });
 
   it('should deny a new game when an existing one has started but not finished', async function () {
     await newGame(this, {}).should.be.fulfilled;
     await increaseTimeTo(this.startTime + duration.hours(1));
-    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
+    await newGame(this, {}).should.be.rejectedWith(EVMRevert);
   });
 
   it('should deny a new game when an existing has finished but not complete', async function () {
     await newGame(this, {}).should.be.fulfilled;
     await increaseTimeTo(this.afterEndTime);
-    await newGame(this, {}).should.be.rejectedWith(EVMRevert);    
+    await newGame(this, {}).should.be.rejectedWith(EVMRevert);
   });
 
   it('should not let someone play where there is no game', async function () {
@@ -246,7 +256,7 @@ contract('HashKeyRaffle', function (accounts) {
       complete: 0,
       drawPeriod: this.drawPeriod,
     })
-    
+
   });
 
   it('should not allow play before the game has started', async function () {
@@ -298,22 +308,30 @@ contract('HashKeyRaffle', function (accounts) {
     checkBalance(2)
   });
 
+  it('should get the balance for a single player', async function () {
+    await addThreePlayers(this)
+
+    const balance = await this.lottery.getBalance(1, accounts[1]);
+
+    balance.toNumber().should.equal(1)
+  });
+
   it('should get the tickets for all players', async function () {
     await addThreePlayers(this)
 
     const tickets = await this.lottery.getTickets(1);
 
-    const checkTickets = [
-      accounts[1],
-      accounts[2],
-      accounts[2],
-      accounts[3],
-      accounts[3],
-      accounts[3],
-    ]
-
     tickets.should.deep.equal(checkTickets)
   });
+
+  it('should get the number of tickets for all players', async function () {
+    await addThreePlayers(this)
+
+    const numTickets = await this.lottery.getNumberOfTickets(1);
+    numTickets.toNumber().should.equal(checkTickets.length)
+  });
+
+
 
   it('should get the draw length', async function () {
     await addThreePlayers(this)
@@ -331,7 +349,7 @@ contract('HashKeyRaffle', function (accounts) {
       from: accounts[0],
     }).should.be.rejectedWith(EVMRevert);
   });
-  
+
   it('should reject a draw with the wrong secret', async function () {
     await addThreePlayers(this)
     await increaseTimeTo(this.endTime + duration.hours(1));
@@ -352,7 +370,7 @@ contract('HashKeyRaffle', function (accounts) {
 
     await addThreePlayers(this)
     await increaseTimeTo(this.endTime + duration.hours(1));
-    
+
     await this.lottery.draw(this.secret, {
       from: accounts[0],
     }).should.be.fulfilled;
@@ -406,7 +424,7 @@ contract('HashKeyRaffle', function (accounts) {
     checkGasPaid.should.equal(checkCalcualtedGasPaid)
   });
 
-  
+
   it('should emit a GameCreated event', async function () {
     const createTx = await newGame(this, {}).should.be.fulfilled;
     const event = createTx.logs.find(e => e.event === 'GameCreated');

@@ -6,7 +6,7 @@ import "zeppelin-solidity/contracts/math/SafeMath.sol";
 contract HashKeyRaffle is Ownable {
 
   using SafeMath for uint256;
-  
+
   // split up the structs otherwise we get a stack depth error
   struct GameSettings
   {
@@ -56,7 +56,7 @@ contract HashKeyRaffle is Ownable {
     GameResults results;
     GameEntries entries;
   }
-  
+
   event GameCreated(uint gameIndex, uint256 price, uint feePercent, uint start, uint end);
   event TicketsPurchased(uint gameIndex, address player, uint256 balance, uint256 totalBalance);
   event OverspendReturned(uint gameIndex, address player, uint256 amount);
@@ -81,7 +81,7 @@ contract HashKeyRaffle is Ownable {
 
   // the sequence of games ids in time earliest first - use this for iterating games
   uint[] public allGames;
-  
+
   // the core state database of id -> game
   mapping (uint => Game) games;
 
@@ -91,9 +91,9 @@ contract HashKeyRaffle is Ownable {
   }
 
   /*
-  
+
     HELPERS
-    
+
   */
 
   /**
@@ -133,9 +133,9 @@ contract HashKeyRaffle is Ownable {
   function isGameInsideDrawWindow(uint gameId) private view returns (bool) {
     require(gameId > 0);
     GameSettings storage settings = games[gameId].settings;
-    return 
-      settings.end > 0 && 
-      settings.drawPeriod > 0 && 
+    return
+      settings.end > 0 &&
+      settings.drawPeriod > 0 &&
       block.timestamp > settings.end &&
       block.timestamp < settings.end.add(settings.drawPeriod);
   }
@@ -147,9 +147,9 @@ contract HashKeyRaffle is Ownable {
   function isGameAfterDrawWindow(uint gameId) private view returns (bool) {
     require(gameId > 0);
     GameSettings storage settings = games[gameId].settings;
-    return 
-      settings.end > 0 && 
-      settings.drawPeriod > 0 && 
+    return
+      settings.end > 0 &&
+      settings.drawPeriod > 0 &&
       block.timestamp > settings.end.add(settings.drawPeriod);
   }
 
@@ -178,9 +178,9 @@ contract HashKeyRaffle is Ownable {
   }
 
   /*
-  
+
     MODIFIERS
-    
+
   */
 
   /**
@@ -231,9 +231,9 @@ contract HashKeyRaffle is Ownable {
   }
 
   /*
-  
+
     OWNER STATE CHANGING METHODS
-    
+
   */
 
   /**
@@ -246,7 +246,7 @@ contract HashKeyRaffle is Ownable {
     public
     onlyOwner
     canCreateGame()
-    returns (uint) 
+    returns (uint)
   {
 
     // sanity checking for time
@@ -289,7 +289,7 @@ contract HashKeyRaffle is Ownable {
    * @return uint256 the number of tickets purchased
    */
   function draw(string _secretKey)
-    public    
+    public
     onlyOwner
     hasGame()
     canDrawGame()
@@ -303,7 +303,7 @@ contract HashKeyRaffle is Ownable {
     // to make last minute calls to "play"
     require(block.timestamp > settings.end.add(END_BUFFER));
 
-    // the _secretKey must line up with the originally submitted hash      
+    // the _secretKey must line up with the originally submitted hash
     require(verifySecretKey(currentGameIndex, _secretKey));
 
     uint256 finalNumber = getDrawNumber(currentGameIndex, _secretKey);
@@ -327,7 +327,7 @@ contract HashKeyRaffle is Ownable {
         feeAmount = totalPot.div(100).mul(settings.feePercent);
         winningAmount = totalPot.sub(feeAmount);
       }
-      
+
       // update the state of the game
       results.winner = winningAddress;
       results.prizePaid = winningAmount;
@@ -377,16 +377,16 @@ contract HashKeyRaffle is Ownable {
 
 
   /*
-  
+
     PUBLIC STATE CHANGING METHODS
-    
+
   */
 
   /**
    * @dev the public play function that users will call to buy tickets
    * @return uint256: the number of tickets purchased
    */
-  function play() 
+  function play()
     public
     payable
     hasGame()
@@ -413,7 +413,7 @@ contract HashKeyRaffle is Ownable {
       entries.balances[msg.sender] = entries.balances[msg.sender].add(ticketsPurchased);
       TicketsPurchased(currentGameIndex, msg.sender, ticketsPurchased, entries.balances[msg.sender]);
     }
-    
+
     // return the money left over from the tickets
     if(overspend > 0) {
       msg.sender.transfer(overspend);
@@ -449,9 +449,9 @@ contract HashKeyRaffle is Ownable {
 
 
   /*
-  
+
     PUBLIC VIEW METHODS
-    
+
   */
 
   /**
@@ -520,6 +520,14 @@ contract HashKeyRaffle is Ownable {
       }
     }
     return _addresses;
+  }
+
+  /**
+   * @dev returns the number of tickets bought
+   * @return uint
+   */
+  function getNumberOfTickets(uint gameIndex) public view returns (uint) {
+    return getTickets(gameIndex).length;
   }
 
   /**
