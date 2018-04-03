@@ -23,6 +23,13 @@ module.exports = {
       port: 8545,
       network_id: 3,
       gas: 4712388
+    },
+    localropsten: {
+      host: "192.168.0.32",
+      port: 8545,
+      network_id: "3",
+      gas: 4612388,
+      from: "0xc4feb381534d0d806a3e2be0e96d64620d03eb7d",
     }
   },
   mocha: {
