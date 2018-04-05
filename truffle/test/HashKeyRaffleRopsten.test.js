@@ -14,7 +14,7 @@ const getHash = (st) => utils.soliditySha3(st)
 
 const BigNumber = web3.BigNumber;
 
-const ticketPrice = (n) => web3.toWei(n * 1000, 'gwei')
+const ticketPrice = (n, unit) => web3.toWei(n, unit || 'milli')
 
 const should = require('chai')
   .use(require('chai-as-promised'))
@@ -85,6 +85,7 @@ contract('HashKeyRaffleRopsten', function (accounts) {
     const start = props.start || t.startTime
     const end = props.end || t.endTime
     const drawPeriod = props.drawPeriod || t.drawPeriod
+    const minPlayers = props.minPlayers || 1
     const account = props.account || accounts[0]
     const gas = props.gas || "4200000"
 
@@ -99,6 +100,7 @@ contract('HashKeyRaffleRopsten', function (accounts) {
         start,
         end,
         fees,      
+        minPlayers,
         settings: { from: account, gas }
       }, null, 4))
     }
@@ -109,7 +111,8 @@ contract('HashKeyRaffleRopsten', function (accounts) {
       drawPeriod,
       start,
       end,
-      fees,      
+      fees,
+      minPlayers,   
       { from: account, gas }
     )
   }
@@ -170,8 +173,6 @@ contract('HashKeyRaffleRopsten', function (accounts) {
       secret: this.secret,
     }, null, 4))
     
-    //await newGame(t, {}).should.be.fulfilled;
-
     /*
     await addThreePlayers(this)
     await increaseTimeTo(this.endTime + duration.hours(1));

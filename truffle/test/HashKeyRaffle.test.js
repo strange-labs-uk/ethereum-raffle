@@ -15,7 +15,8 @@ const getHash = (st) => utils.soliditySha3(st)
 
 const BigNumber = web3.BigNumber;
 
-const ticketPrice = (n) => web3.toWei(n * 1000, 'gwei')
+const ticketPrice = (n, unit) => web3.toWei(n, unit || 'milli')
+const largeTicketPrice = (n, unit) => web3.toWei(n*10, unit || 'ether')
 
 const should = require('chai')
   .use(require('chai-as-promised'))
@@ -134,22 +135,23 @@ contract('HashKeyRaffle', function (accounts) {
     return playTx
   }
 
-  async function addSinglePlayer(t, index, ticketCount) {
+  async function addSinglePlayer(t, index, ticketCount, useTicketPrice) {
     ticketCount = ticketCount || index
     await increaseTimeTo(t.startTime + duration.hours(index));
-    await t.lottery.play({
+    const playTx = await t.lottery.play({
       from: accounts[index],
-      value: ticketPrice(ticketCount)
+      value: useTicketPrice ? (ticketCount * useTicketPrice) : ticketPrice(ticketCount)
     }).should.be.fulfilled;
+    return playTx
   }
 
   // start at account 1 since account 0 is the owner
-  async function addThreePlayers(t, ticketCounts) {
+  async function addThreePlayers(t, ticketCounts, useTicketPrice) {
     ticketCounts = ticketCounts || []
     await newGame(t, {}).should.be.fulfilled;
-    await addSinglePlayer(t, 1, ticketCounts[0])
-    await addSinglePlayer(t, 2, ticketCounts[1])
-    await addSinglePlayer(t, 3, ticketCounts[2])
+    await addSinglePlayer(t, 1, ticketCounts[0], useTicketPrice)
+    await addSinglePlayer(t, 2, ticketCounts[1], useTicketPrice)
+    await addSinglePlayer(t, 3, ticketCounts[2], useTicketPrice)
   }
 
   const checkTickets = [
@@ -178,7 +180,7 @@ contract('HashKeyRaffle', function (accounts) {
     this.lottery = await HashKeyRaffle.new();
     this.secret = 'apples'
   });
-/*
+
   it('should create the contract and be owned by account0', async function () {
     this.lottery.should.exist;
     const owner = await this.lottery.owner()
@@ -523,34 +525,39 @@ contract('HashKeyRaffle', function (accounts) {
     // we should have got at least 9 ticket prices back (because I can't be bother to do the gas code like above)
     afterRefundBalance.should.be.above(beforePlayBalance -parseInt(ticketPrice(1)))
   });
-*/
+
   it('should refund if minPlayers is not met', async function () {
 
-    const beforePlayBalance = getAccountBalances([1])[0]
-    const price = ticketPrice(1)
+    const getBalance = () => web3.fromWei(getAccountBalances([1])[0], 'ether')
+
+    const price = largeTicketPrice(1)
+
+    let balances = {
+      before: parseFloat(getBalance()),
+      price: parseFloat(web3.fromWei(price, 'ether'))
+    }
+
     await newGame(this, {
-      minPlayers: 15
+      minPlayers: 15,
+      price
     }).should.be.fulfilled;
-    await addSinglePlayer(this, 1, 3)
-    await addSinglePlayer(this, 2, 3)
-    await addSinglePlayer(this, 3, 3)
+    await addSinglePlayer(this, 1, 1, price)
     await increaseTimeTo(this.endTime + duration.hours(1));
-    const gameSettings = convertGameSettingsData(await this.lottery.getGameSettings(1))
-    console.dir(gameSettings)
+
+    balances.middle = parseFloat(getBalance())
 
     await this.lottery.draw(this.secret, {
       from: accounts[0],
     }).should.be.fulfilled;
-    /*
-    const afterPlayBalance = getAccountBalances([1])[0]
 
-    console.dir({
-      beforePlayBalance,
-      afterPlayBalance,
-      price,
-    })*/
+    balances.end = parseFloat(getBalance())
 
-    
+    if(process.env.DEBUG) {
+      console.log(JSON.stringify(balances, null, 4))
+    }
+
+    assert(balances.middle < (balances.before - balances.price), "the balance after buying a ticket is - (ticketPrice + gas)")
+    assert(balances.end == balances.middle + balances.price, "the balance after draw is middleBalance + ticketPrice")
 
   })
 

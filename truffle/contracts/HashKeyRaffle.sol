@@ -142,6 +142,18 @@ contract HashKeyRaffle is Ownable {
   }
 
   /**
+   * @dev has the game got enough players?
+   * @return bool
+   */
+  function isGameFullEnough(uint gameId) private view returns (bool) {
+    require(gameId > 0);
+    GameSettings storage settings = games[gameId].settings;
+    GameEntries storage entries = games[gameId].entries;
+    uint256 numberOfPlayers = entries.players.length;
+    return numberOfPlayers >= settings.minPlayers;
+  }
+
+  /**
    * @dev is time past game.end + game.drawPeriod
    * @return bool
    */
@@ -299,7 +311,6 @@ contract HashKeyRaffle is Ownable {
   {
     GameSettings storage settings = games[currentGameIndex].settings;
     GameSecurity storage security = games[currentGameIndex].security;
-    GameEntries storage entries = games[currentGameIndex].entries;
     GameResults storage results = games[currentGameIndex].results;
 
     // we want at least 2 minutes between the game ending and the draw
@@ -315,21 +326,16 @@ contract HashKeyRaffle is Ownable {
     // pick the winning index using modulus numTickets
     uint256 numTickets = drawAddresses.length;
 
-    settings.complete = block.timestamp;
-    security.secretKey = _secretKey;
-    security.lastBlockHash = block.blockhash(block.number - 1);
-
-    uint256 numberOfPlayers = entries.players.length;
-
-    if(numberOfPlayers < settings.minPlayers) {
-      refundAll();
-    }
-    else if(numTickets > 0) {
+    if(isGameFullEnough(currentGameIndex)) {
       uint256 winningIndex = finalNumber % numTickets;
       address winningAddress = drawAddresses[winningIndex];
       uint256 totalPot = settings.price.mul(numTickets);
       uint256 feeAmount = 0;
       uint256 winningAmount = totalPot;
+
+      settings.complete = block.timestamp;
+      security.secretKey = _secretKey;
+      security.lastBlockHash = block.blockhash(block.number - 1);
 
       // if there are fees to pay then calculate them
       if(settings.feePercent > 0) {
@@ -354,16 +360,16 @@ contract HashKeyRaffle is Ownable {
 
       DrawComplete(currentGameIndex, winningAddress, finalNumber, numTickets, winningAmount);
     }
+    else {
+      _refundAll();
+    }
   }
 
   /**
    * @dev refund all remaining balances and mark the game as refunded and complete
    */
-  function refundAll()
-    public
-    onlyOwner
-    hasGame()
-    canRefund()
+  function _refundAll()
+    private
   {
 
     GameSettings storage settings = games[currentGameIndex].settings;
@@ -382,6 +388,16 @@ contract HashKeyRaffle is Ownable {
     results.refunded = true;
     settings.complete = block.timestamp;
     RefundComplete(currentGameIndex);
+  }
+
+  
+  function refundAll()
+    public
+    onlyOwner
+    hasGame()
+    canRefund()
+  {
+    _refundAll();
   }
 
 
