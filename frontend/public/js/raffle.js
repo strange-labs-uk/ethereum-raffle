@@ -46,15 +46,34 @@ function init() {
                         //balances: getBalances,
                         //tickets: getTickets,
                     }, next)
-                }
-            ], function(error, gameData) {
-                if(error) {
-                    console.error(error)
-                }
-                else {
+                },
+
+                function(gameData, next) {
                     self.gameData = gameData
                     console.log("gameData loaded");
-                    console.log(JSON.stringify(gameData, null, 4))
+                    self.price = gameData.settings[0].toNumber()
+                    self.feePercent = gameData.settings[1].toNumber()
+                    self.startTime = new Date(gameData.settings[2].toNumber()*1000)
+                    self.endTime = new Date(gameData.settings[3].toNumber()*1000)
+                    self.complete = gameData.settings[4].toNumber()
+                    self.drawPeriod = gameData.settings[5].toNumber()
+                    self.minPlayers = gameData.settings[6].toNumber()
+                    
+                    web3.eth.getBlock('latest', next)
+                },
+
+            ], function(error, latestTime) {
+                if(error) {
+                    console.error(error)
+                } else {
+                    self.latestTime = new Date(latestTime.timestamp*1000);
+                    if (self.startTime > self.latestTime) {
+                        updateUI('countdown_text', 'Starting')
+                        initializeClock(self.startTime);
+                    } else {
+                        updateUI('countdown_text', 'Ending')
+                        initializeClock(self.endTime);
+                    }
                     // any other setup here
                     //updateEthRaised();
                     //setupLoops();
@@ -143,43 +162,6 @@ function initTime() {
             console.log(error);
         } else {
             console.log("web3.eth.getBlock('latest') success");
-            self.latestTime = new Date(result.timestamp*1000);
-            getStartTime();
-        }
-    });
-}
-
-function getStartTime() {
-    self.Raffle.startTime.call(function(error, result) {
-        if (error) {
-            console.log("Raffle.startTime fail");
-            console.log(error);
-        } else {
-            console.log("Raffle.startTime success");
-            self.startTime = new Date(result*1000);
-
-            if (self.startTime > self.latestTime) {
-                updateUI('countdown_text', 'Starting')
-                initializeClock(startTime);
-            } else {
-                getEndTime();
-            }
-
-        }
-    });
-}
-
-function getEndTime() {
-    self.Raffle.endTime.call(function(error, result) {
-        if (error) {
-            console.log("Raffle.endTime fail");
-            console.log(error);
-        } else {
-            console.log("Raffle.endTime success");
-            var endTime = new Date(result*1000);
-
-            updateUI('countdown_text', 'Ending')
-            initializeClock(endTime);
         }
     });
 }
