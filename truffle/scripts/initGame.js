@@ -61,6 +61,8 @@ module.exports = function(callback) {
       callback()
     })
     .catch(function(e) {
+      console.error('-------------------------------------------');
+      console.error('ERROR')
       console.error(e)
       callback(e)
     })

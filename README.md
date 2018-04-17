@@ -72,6 +72,22 @@ For example:
 SECRET_KEY=oranges TICKET_PRICE=100 truffle exec scripts/initGame.js
 ```
 
+## Running a script against another network
+
+Make sure you have the networks setup in `truffle.js` and use the `--network ropsten` flag to truffle exec to deploy to ropsten.
+
+For example:
+
+```bash
+truffle --network ropsten exec scripts/initGame.js
+```
+
+## Getting info about the current game
+
+```bash
+truffle exec scripts/gameInfo.js
+```
+
 
 
 
