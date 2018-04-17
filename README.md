@@ -39,18 +39,22 @@ In one console - get a truffle develop going:
 truffle develop
 ```
 
-Then we compile and migrate:
+Then, in another console window, we compile and migrate:
 
 ```bash
 truffle compile
-truffle migrate
+truffle migrate --reset
 ```
 
 Then we run our initializing script which creates a game:
 
 ```bash
-truffle exec scripts/initGameTruffle.js
+truffle exec scripts/initGame.js
 ```
+
+**NOTE** - if this command fails - try again!
+
+TODO: explain why ^
 
 You can set the following variables:
 
@@ -65,7 +69,9 @@ You can set the following variables:
 For example:
 
 ```bash
-SECRET_KEY=oranges TICKET_PRICE=100 truffle exec scripts/initGameTruffle.js
+SECRET_KEY=oranges TICKET_PRICE=100 truffle exec scripts/initGame.js
 ```
+
+
 
 
