@@ -1,18 +1,3 @@
-function setupLoops() {
-    setInterval(function() {
-        // Check and updateAccountBalance if the user has changed account every second
-        if (web3.eth.accounts[0] !== self.account) {
-            updateAccountBalance();
-        }
-    }, 1000);
-    setInterval(function() {
-        /*  updateAccountBalance and updateEthRaised every minute
-            in case tokens are being bought elsewhere */
-        updateAccountBalance();
-        updateEthRaised();
-    }, 60000);
-}
-
 function init() {
     // Checking if Web3 has been injected by the browser (Mist/MetaMask)
     if (typeof web3 !== 'undefined') {
@@ -41,10 +26,12 @@ function init() {
                 function(currentGameIndex, next) {
                     console.log("currentGameIndex loaded: " + currentGameIndex);
                     self.currentGameIndex = currentGameIndex;
+                    self.address = web3.eth.accounts[0];
                     async.parallel({
                         settings: getGameSettings,
-                        //balances: getBalances,
-                        //tickets: getTickets,
+                        balance: getBalance,
+                        numberOfTickets: getNumberOfTickets,
+                        latestTime: getLatestTime,
                     }, next)
                 },
 
@@ -58,15 +45,15 @@ function init() {
                     self.complete = gameData.settings[4].toNumber()
                     self.drawPeriod = gameData.settings[5].toNumber()
                     self.minPlayers = gameData.settings[6].toNumber()
+                     
+                    self.balance = gameData.balance.toNumber()
+                    updateUI('account_balance', '<a title="' + self.account + '">You own ' + self.balance + ' tickets.</a>');
                     
-                    web3.eth.getBlock('latest', next)
-                },
+                    self.numberOfTickets = gameData.numberOfTickets.toNumber()
+                    self.ethRaised = self.numberOfTickets * self.price * self.feePercent / 100
+                    updateUI('eth_raised', 'Grand prize of ' + self.ethRaised + ' ETH');
 
-            ], function(error, latestTime) {
-                if(error) {
-                    console.error(error)
-                } else {
-                    self.latestTime = new Date(latestTime.timestamp*1000);
+                    self.latestTime = new Date(gameData.latestTime.timestamp*1000);
                     if (self.startTime > self.latestTime) {
                         updateUI('countdown_text', 'Starting')
                         initializeClock(self.startTime);
@@ -74,6 +61,14 @@ function init() {
                         updateUI('countdown_text', 'Ending')
                         initializeClock(self.endTime);
                     }
+
+                    updatePrice()
+                },
+
+            ], function(error) {
+                if(error) {
+                    console.error(error)
+                } else {
                     // any other setup here
                     //updateEthRaised();
                     //setupLoops();
@@ -85,85 +80,44 @@ function init() {
     }
 }
 
+function setupLoops() {
+    setInterval(function() {
+        // Check and updateAccountBalance if the user has changed account every second
+        if (web3.eth.accounts[0] !== self.account) {
+            updateAccountBalance();
+        }
+    }, 1000);
+    setInterval(function() {
+        /*  updateAccountBalance and updateEthRaised every minute
+            in case tokens are being bought elsewhere */
+        updateAccountBalance();
+        updateEthRaised();
+    }, 60000);
+}
+
+function getLatestTime(done) {
+    web3.eth.getBlock('latest', done)
+}
+
 function getGameSettings(done) {
     self.Raffle.getGameSettings(self.currentGameIndex, done)
 }
 
-function getBalances(done) {
-    self.Raffle.getBalances(self.currentGameIndex, done)
+function getBalance(done) {
+    self.Raffle.getBalance(self.currentGameIndex, self.address, done)
 }
 
-function getTickets(done) {
-    self.Raffle.getTickets(self.currentGameIndex, done)
+function getNumberOfTickets(done) {
+    self.Raffle.getNumberOfTickets(self.currentGameIndex, done)
 }
 
-function updateCost() {
-    var eth_cost = weiCost()/10**18;
+function updatePrice() {
+    var eth_cost = self.price/10**18;
     console.log(eth_cost);
     if (!isNaN(eth_cost)) {
         var text = 'Buy for ' + eth_cost + ' ETH';
         $("#btn-buy").val(text);
     }
-}
-
-function updateAccountBalance() {
-    self.account = web3.eth.accounts[0];
-    self.Raffle.getBalance(self.currentGameIndex+1, self.account, function(error, result){
-        if (error) {
-            console.log('Error retrieving balance');
-        } else {
-            self.balance = web3.toDecimal(result);
-            updateUI('account_balance', '<a title="' + self.account + '">You own ' + self.balance + ' tickets.</a>');
-        }
-    });
-}
-
-function updateGameSettings() {
-    self.Raffle.getEthRaised(self.currentGameIndex+1, function(error, result) {
-        if (error) {
-            console.log("Raffle.weiRaised fail");
-            console.log(error);
-        } else {
-            console.log("Raffle.weiRaised success");
-            updateUI('eth_raised', 'Grand prize of ' + result/10**18 + ' ETH');
-        }
-    });
-}
-
-function updateEthRaised() {
-    self.Raffle.getEthRaised(self.currentGameIndex+1, function(error, result) {
-        if (error) {
-            console.log("Raffle.weiRaised fail");
-            console.log(error);
-        } else {
-            console.log("Raffle.weiRaised success");
-            updateUI('eth_raised', 'Grand prize of ' + result/10**18 + ' ETH');
-        }
-    });
-}
-
-function getWeiRate() {
-    self.Raffle.rate.call(function(error, result) {
-        if (error) {
-            console.log("Raffle.rate fail");
-            console.log(error);
-        } else {
-            console.log("Raffle.rate success");
-            self.weiRate = result;
-            updateCost();
-        }
-    });
-}
-
-function initTime() {
-    web3.eth.getBlock('latest',function(error, result) {
-        if (error) {
-            console.log("web3.eth.getBlock('latest') fail");
-            console.log(error);
-        } else {
-            console.log("web3.eth.getBlock('latest') success");
-        }
-    });
 }
 
 function updateUI(docElementId, html)  {
@@ -179,13 +133,11 @@ function weiCost() {
     if (!isNaN(numTickets)) {
         $("#num-tickets").val(numTickets);
     }
-    return parseInt(numTickets * self.weiRate);
+    return parseInt(numTickets * self.price);
 }
 
 function buyClicked() {
-    var numTokens = parseInt($("#num-tickets").val());
-
-    self.Raffle.buyTokens(self.account, self.entropy, {value: weiCost() }, function(error) {
+    self.Raffle.play({value: weiCost() }, function(error) {
         if (error) {
             console.log('Raffle.buyTokens fail');
             console.log(error);
@@ -265,8 +217,6 @@ function initializeClock(untilTime) {
 
     function updateClock() {
         var t = getTimeRemaining(untilTime);
-
-        console.log(t.total)
 
         if (t.total < 0) {
             clearInterval(timeInterval);
