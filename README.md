@@ -30,3 +30,42 @@ To serve it:
     npm start
 
 Then browse to http://localhost:3000.
+
+## Deploy contract to test frontend
+
+In one console - get a truffle develop going:
+
+```bash
+truffle develop
+```
+
+Then we compile and migrate:
+
+```bash
+truffle compile
+truffle migrate
+```
+
+Then we run our initializing script which creates a game:
+
+```bash
+truffle exec scripts/initGameTruffle.js
+```
+
+You can set the following variables:
+
+ * `SECRET_KEY` (default = `apples`)
+ * `TICKET_PRICE` (default = `1000`)
+ * `DRAW_PERIOD` (default = `30`)
+ * `START_TIME` (default = `lastBlockTime + 60 seconds`)
+ * `DURATION` (default = `5 * 60`)
+ * `FEE_PERCENT` (default = `10`)
+ * `MIN_PLAYERS` (default = `1`)
+
+For example:
+
+```bash
+SECRET_KEY=oranges TICKET_PRICE=100 truffle exec scripts/initGameTruffle.js
+```
+
+
