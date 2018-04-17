@@ -1,35 +1,100 @@
+function setupLoops() {
+    setInterval(function() {
+        // Check and updateAccountBalance if the user has changed account every second
+        if (web3.eth.accounts[0] !== self.account) {
+            updateAccountBalance();
+        }
+    }, 1000);
+    setInterval(function() {
+        /*  updateAccountBalance and updateEthRaised every minute
+            in case tokens are being bought elsewhere */
+        updateAccountBalance();
+        updateEthRaised();
+    }, 60000);
+}
+
 function init() {
     // Checking if Web3 has been injected by the browser (Mist/MetaMask)
     if (typeof web3 !== 'undefined') {
 
         if (web3 && web3.isConnected()) {
             console.log("web3 is connected");
-            web3.version.getNetwork(function(error,result){
-                if (error){
-                    console.log("web3.version.getNetwork fail");
-                    console.log(error);
-                } else {
+
+            async.waterfall([
+
+                function(next) {
+                    web3.version.getNetwork(next)
+                },
+
+                function(result, next) {
                     console.log("web3.version.getNetwork success");
                     self.network_id = parseInt(result);
-                    initRaffle();
-                    setInterval(function() {
-                        // Check and updateAccountBalance if the user has changed account every second
-                        if (web3.eth.accounts[0] !== self.account) {
-                            updateAccountBalance();
-                        }
-                    }, 1000);
-                    setInterval(function() {
-                        /*  updateAccountBalance and updateEthRaised every minute
-                            in case tokens are being bought elsewhere */
-                        updateAccountBalance();
-                        updateEthRaised();
-                    }, 60000);                    
+
+                    $.getJSON("/ws/HashKeyRaffle.json", function(def) {
+                        // Retrieved the contract from the local geth node
+                        self.Raffle = web3.eth.contract(def['abi'])
+                                        .at(def.networks[self.network_id].address);
+                        self.Raffle.currentGameIndex(next)
+                    })
+                },
+
+                function(currentGameIndex, next) {
+                    console.log("currentGameIndex loaded: " + currentGameIndex);
+                    self.currentGameIndex = currentGameIndex;
+                    async.parallel({
+                        settings: getGameSettings,
+                        //balances: getBalances,
+                        //tickets: getTickets,
+                    }, next)
+                },
+
+                function(gameData, next) {
+                    self.gameData = gameData
+                    console.log("gameData loaded");
+                    self.price = gameData.settings[0].toNumber()
+                    self.feePercent = gameData.settings[1].toNumber()
+                    self.startTime = new Date(gameData.settings[2].toNumber()*1000)
+                    self.endTime = new Date(gameData.settings[3].toNumber()*1000)
+                    self.complete = gameData.settings[4].toNumber()
+                    self.drawPeriod = gameData.settings[5].toNumber()
+                    self.minPlayers = gameData.settings[6].toNumber()
+                    
+                    web3.eth.getBlock('latest', next)
+                },
+
+            ], function(error, latestTime) {
+                if(error) {
+                    console.error(error)
+                } else {
+                    self.latestTime = new Date(latestTime.timestamp*1000);
+                    if (self.startTime > self.latestTime) {
+                        updateUI('countdown_text', 'Starting')
+                        initializeClock(self.startTime);
+                    } else {
+                        updateUI('countdown_text', 'Ending')
+                        initializeClock(self.endTime);
+                    }
+                    // any other setup here
+                    //updateEthRaised();
+                    //setupLoops();
                 }
-            });
+            })
         }    
     } else {
         console.log('No web3? You should consider trying MetaMask!')
     }
+}
+
+function getGameSettings(done) {
+    self.Raffle.getGameSettings(self.currentGameIndex, done)
+}
+
+function getBalances(done) {
+    self.Raffle.getBalances(self.currentGameIndex, done)
+}
+
+function getTickets(done) {
+    self.Raffle.getTickets(self.currentGameIndex, done)
 }
 
 function updateCost() {
@@ -41,21 +106,6 @@ function updateCost() {
     }
 }
 
-function initRaffle() {
-    $.getJSON("/ws/HashKeyRaffle.json", function(def) {
-        // Retrieved the contract from the local geth node
-        self.Raffle = web3.eth.contract(def['abi'])
-                        .at(def.networks[self.network_id].address);
-        self.Raffle.currentGameIndex( function(error, result){
-            if (error) {
-                console.log('Error retrieving current game index');
-            } else {
-                self.currentGameIndex = result;
-            }
-        });
-    });
-}
-
 function updateAccountBalance() {
     self.account = web3.eth.accounts[0];
     self.Raffle.getBalance(self.currentGameIndex+1, self.account, function(error, result){
@@ -64,6 +114,18 @@ function updateAccountBalance() {
         } else {
             self.balance = web3.toDecimal(result);
             updateUI('account_balance', '<a title="' + self.account + '">You own ' + self.balance + ' tickets.</a>');
+        }
+    });
+}
+
+function updateGameSettings() {
+    self.Raffle.getEthRaised(self.currentGameIndex+1, function(error, result) {
+        if (error) {
+            console.log("Raffle.weiRaised fail");
+            console.log(error);
+        } else {
+            console.log("Raffle.weiRaised success");
+            updateUI('eth_raised', 'Grand prize of ' + result/10**18 + ' ETH');
         }
     });
 }
@@ -100,43 +162,6 @@ function initTime() {
             console.log(error);
         } else {
             console.log("web3.eth.getBlock('latest') success");
-            self.latestTime = new Date(result.timestamp*1000);
-            getStartTime();
-        }
-    });
-}
-
-function getStartTime() {
-    self.Raffle.startTime.call(function(error, result) {
-        if (error) {
-            console.log("Raffle.startTime fail");
-            console.log(error);
-        } else {
-            console.log("Raffle.startTime success");
-            self.startTime = new Date(result*1000);
-
-            if (self.startTime > self.latestTime) {
-                updateUI('countdown_text', 'Starting')
-                initializeClock(startTime);
-            } else {
-                getEndTime();
-            }
-
-        }
-    });
-}
-
-function getEndTime() {
-    self.Raffle.endTime.call(function(error, result) {
-        if (error) {
-            console.log("Raffle.endTime fail");
-            console.log(error);
-        } else {
-            console.log("Raffle.endTime success");
-            var endTime = new Date(result*1000);
-
-            updateUI('countdown_text', 'Ending')
-            initializeClock(endTime);
         }
     });
 }
@@ -176,11 +201,20 @@ function buyClicked() {
     });
 }
 
+// throttle calls to the entropy function to 10 times per second
+var _ENTROPY_TIMEOUT_DISABLE = false
+var _ENTROPY_TIMEOUT_GAP = 100
+
 function generateEntropy(){
+    if(_ENTROPY_TIMEOUT_DISABLE) return
     var randomValues = new Uint32Array(4);
     window.crypto.getRandomValues(randomValues);
     self.entropy = randomValues.join('');
     $('#entropy').text(self.entropy);
+    setTimeout(function() {
+        _ENTROPY_TIMEOUT_DISABLE = false
+    }, _ENTROPY_TIMEOUT_GAP)
+    _ENTROPY_TIMEOUT_DISABLE = true
 }
 
 // /**
@@ -246,62 +280,3 @@ function initializeClock(untilTime) {
 
     var timeInterval = setInterval(updateClock, 1000);
 }
-
-// ---- PARTICLE
-$.getScript('http://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js', function() {
-    particlesJS("particles-js", {
-      particles: {
-        number: { value: 50, density: { enable: true, value_area: 800 } },
-        color: { value: "#ffffff" },
-        shape: {
-          type: "circle",
-          stroke: { width: 0, color: "#000000" },
-          polygon: { nb_sides: 5 },
-          image: { src: "img/github.svg", width: 100, height: 100 }
-        },
-        opacity: {
-          value: 0.6,
-          random: true,
-          anim: { enable: true, speed: 1, opacity_min: 0.2, sync: false }
-        },
-        size: {
-          value: 12.02559045649142,
-          random: true,
-          anim: { enable: false, speed: 40, size_min: 0.1, sync: false }
-        },
-        line_linked: {
-          enable: true,
-          distance: 200,
-          color: "#ffffff",
-          opacity: 0.5,
-          width: 1
-        },
-        move: {
-          enable: true,
-          speed: 10,
-          direction: "none",
-          random: true,
-          straight: false,
-          out_mode: "out",
-          bounce: false,
-          attract: { enable: false, rotateX: 600, rotateY: 1200 }
-        }
-      },
-      interactivity: {
-        detect_on: "canvas",
-        events: {
-          onhover: { enable: true, mode: "grab" },
-          onclick: { enable: false, mode: "repulse" },
-          resize: true
-        },
-        modes: {
-          grab: { distance: 400, line_linked: { opacity: 1 } },
-          bubble: { distance: 400, size: 40, duration: 2, opacity: 8, speed: 3 },
-          repulse: { distance: 200, duration: 0.4 },
-          push: { particles_nb: 4 },
-          remove: { particles_nb: 2 }
-        }
-      },
-      retina_detect: true
-    });
-});

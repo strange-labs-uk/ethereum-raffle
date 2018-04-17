@@ -1,6 +1,6 @@
 pragma solidity ^0.4.18;
 
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./Ownable.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract HashKeyRaffle is Ownable {
@@ -294,7 +294,7 @@ contract HashKeyRaffle is Ownable {
 
     allGames.push(g.index);
 
-    GameCreated(g.index, g.settings.price, g.settings.feePercent, g.settings.start, g.settings.end, g.settings.minPlayers);
+    emit GameCreated(g.index, g.settings.price, g.settings.feePercent, g.settings.start, g.settings.end, g.settings.minPlayers);
 
     return g.index;
   }
@@ -350,15 +350,15 @@ contract HashKeyRaffle is Ownable {
 
       // send the prize
       winningAddress.transfer(winningAmount);
-      PayWinnings(currentGameIndex, winningAddress, winningAmount);
+      emit PayWinnings(currentGameIndex, winningAddress, winningAmount);
 
       // send the fees
       if(feeAmount > 0) {
         owner.transfer(feeAmount);
-        PayFees(currentGameIndex, owner, feeAmount);
+        emit PayFees(currentGameIndex, owner, feeAmount);
       }
 
-      DrawComplete(currentGameIndex, winningAddress, finalNumber, numTickets, winningAmount);
+      emit DrawComplete(currentGameIndex, winningAddress, finalNumber, numTickets, winningAmount);
     }
     else {
       _refundAll();
@@ -387,7 +387,7 @@ contract HashKeyRaffle is Ownable {
 
     results.refunded = true;
     settings.complete = block.timestamp;
-    RefundComplete(currentGameIndex);
+    emit RefundComplete(currentGameIndex);
   }
 
   
@@ -436,13 +436,13 @@ contract HashKeyRaffle is Ownable {
         entries.players.push(msg.sender);
       }
       entries.balances[msg.sender] = entries.balances[msg.sender].add(ticketsPurchased);
-      TicketsPurchased(currentGameIndex, msg.sender, ticketsPurchased, entries.balances[msg.sender]);
+      emit TicketsPurchased(currentGameIndex, msg.sender, ticketsPurchased, entries.balances[msg.sender]);
     }
 
     // return the money left over from the tickets
     if(overspend > 0) {
       msg.sender.transfer(overspend);
-      OverspendReturned(currentGameIndex, msg.sender, overspend);
+      emit OverspendReturned(currentGameIndex, msg.sender, overspend);
     }
 
     return ticketsPurchased;
@@ -469,7 +469,7 @@ contract HashKeyRaffle is Ownable {
     entries.balances[msg.sender] = 0;
     msg.sender.transfer(refundAmount);
 
-    PayRefund(currentGameIndex, msg.sender, refundAmount);
+    emit PayRefund(currentGameIndex, msg.sender, refundAmount);
   }
 
 
@@ -482,6 +482,11 @@ contract HashKeyRaffle is Ownable {
   /**
    * @dev return the base settings for the game
    */
+/*
+  function getCurrentGameIndex() public view returns (uint) {
+    return currentGameIndex;
+  }
+*/
   function getGameSettings(uint gameIndex) public view returns (uint256, uint, uint, uint, uint, uint, uint) {
     GameSettings storage settings = games[gameIndex].settings;
     return (
@@ -540,7 +545,7 @@ contract HashKeyRaffle is Ownable {
     address[] memory _addresses = new address[](arrLength);
     uint256 _addressIndex = 0;
     for(uint256 i=0; i<entries.players.length; i++) {
-      var playerAddress = entries.players[i];
+      address playerAddress = entries.players[i];
       for(uint256 j=0; j<entries.balances[playerAddress]; j++) {
         _addresses[_addressIndex++] = playerAddress;
       }
