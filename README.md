@@ -1,35 +1,5 @@
 # Ethereum HashKeyRaffle Demo
 
-A trustworthy distributed raffle application.
-
-## install
-
-You will need:
-
- * [docker](https://docs.docker.com/install/)
-
-```bash
-git clone https://github.com/strange-labs-uk/ethereum-raffle
-cd ethereum-raffle
-
-```
-
-## run contract tests
-
-You need 2 terminal windows, in the first one open a truffle development environment:
-
-```bash
-truffle develop
-```
-
-The the second - run the tests:
-
-```bash
-cd truffle
-truffle test
-```
-    
-
 ## Truffle
 
 To deploy the `HashKeyRaffle` DApp on a truffle server, do the following:

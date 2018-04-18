@@ -6,12 +6,11 @@ RUN apk add --update \
     python-dev \
     py-pip \
     build-base \
+    git \
   && pip install virtualenv \
   && rm -rf /var/cache/apk/*
 COPY ./package.json /app/package.json
-COPY ./yarn.lock /app/yarn.lock
-RUN yarn install
+COPY ./package-lock.json /app/package-lock.json
+RUN npm install
 COPY . /app
-ENTRYPOINT ["node_modules/.bin/truffle"]
-CMD ["develop"]
 EXPOSE 8545

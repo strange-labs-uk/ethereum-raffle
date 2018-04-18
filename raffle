@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -euo pipefail
 
 export DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -7,6 +7,8 @@ export APPNAME=${APPNAME:="lottery"}
 export LINK_TEMPLATESTACK=${LINK_TEMPLATESTACK:=""}
 export CI_JOB_ID=${CI_JOB_ID:=""}
 export LOCAL_TRUFFLE=${LOCAL_TRUFFLE:=""}
+export GANACHE_MODE=${GANACHE_MODE:=""}
+export TRUFFLE_DOCKER_EXTRA=${TRUFFLE_DOCKER_EXTRA:=""}
 
 function build-truffle() {
   docker build -t $APPNAME-truffle truffle
@@ -46,26 +48,40 @@ function frontend-stop() {
   docker rm -f $APPNAME-frontend || true
 }
 
-function truffle() {
+function runcontainer() {
   local extraDocker=""
   local extraGanache=""
   # LOCAL_TRUFFLE means a "truffle develop"
   # it means we are not expecting a ganache container to be running
-  if [ -z "$LOCAL_TRUFFLE" ]; then
+  if [ -n "$GANACHE_MODE" ]; then
     extraDocker="$extraDocker --net $APPNAME-network -e GANACHE_HOST=$APPNAME-ganache "
     extraGanache="$extraGanache --network ganache "
   fi
+  local SHARE_FOLDERS=""
+  for folder in contracts migrations test build scripts; do
+    SHARE_FOLDERS="$SHARE_FOLDERS -v $DIR/truffle/$folder:/app/$folder"
+  done
   # mount code if not running in CI mode
   if [ -z "$CI_JOB_ID" ]; then
-    extraDocker="$extraDocker -v $DIR/truffle/contracts:/app/contracts -v $DIR/truffle/migrations:/app/migrations -v $DIR/truffle/test:/app/test -v $DIR/truffle/build:/app/build"
+    extraDocker="$extraDocker $SHARE_FOLDERS"
   fi
   if [ -t 1 ] ; then
     extraDocker="$extraDocker -ti"
   fi
-  docker rm -f $APPNAME-truffle || true
-  docker run $extraDocker \
+  docker rm -f $APPNAME-truffle > /dev/null 2>&1 || true 
+  docker run $extraDocker $TRUFFLE_DOCKER_EXTRA \
     --name $APPNAME-truffle \
+    --entrypoint 'sh' \
     $APPNAME-truffle $extraGanache "$@" 
+}
+
+function truffle() {
+  runcontainer "/app/node_modules/.bin/truffle $@"
+}
+
+
+function solium() {
+  runcontainer "/app/node_modules/.bin/solium -d /app/contracts $@"
 }
 
 # build/deploy the contracts then copy the build folder into the frontend Docker context
