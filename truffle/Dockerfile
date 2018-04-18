@@ -7,6 +7,7 @@ RUN apk add --update \
     py-pip \
     build-base \
     git \
+  && pip install -U pip \
   && pip install virtualenv \
   && rm -rf /var/cache/apk/*
 COPY ./package.json /app/package.json

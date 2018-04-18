@@ -1,3 +1,3 @@
 .PHONY: build
 build:
-	bash docker.sh build
+	bash raffle build
