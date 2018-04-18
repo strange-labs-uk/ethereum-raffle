@@ -1,8 +1,34 @@
 # Ethereum HashKeyRaffle Demo
 
-This repository is yet another prototype of a raffle DApp which is currently just a renamed fork of [SampleCrowdsale.sol](https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/examples/SampleCrowdsale.sol) obtained from the examples shared by [OpenZeppelin](https://github.com/OpenZeppelin/zeppelin-solidity) (an ERC20 token template).
+A trustworthy distributed raffle application.
 
-    git clone https://github.com/strange-labs-uk/ethereum-raffle
+## install
+
+You will need:
+
+ * [docker](https://docs.docker.com/install/)
+
+```bash
+git clone https://github.com/strange-labs-uk/ethereum-raffle
+cd ethereum-raffle
+
+```
+
+## run contract tests
+
+You need 2 terminal windows, in the first one open a truffle development environment:
+
+```bash
+truffle develop
+```
+
+The the second - run the tests:
+
+```bash
+cd truffle
+truffle test
+```
+    
 
 ## Truffle
 
