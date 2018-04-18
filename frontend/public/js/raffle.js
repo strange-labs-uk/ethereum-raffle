@@ -29,8 +29,6 @@ function init() {
                     self.address = web3.eth.accounts[0];
                     async.parallel({
                         settings: getGameSettings,
-                        balance: getBalance,
-                        numberOfTickets: getNumberOfTickets,
                         latestTime: getLatestTime,
                     }, next)
                 },
@@ -46,13 +44,6 @@ function init() {
                     self.drawPeriod = gameData.settings[5].toNumber()
                     self.minPlayers = gameData.settings[6].toNumber()
                      
-                    self.balance = gameData.balance.toNumber()
-                    updateUI('account_balance', '<a title="' + self.account + '">You own ' + self.balance + ' tickets.</a>');
-                    
-                    self.numberOfTickets = gameData.numberOfTickets.toNumber()
-                    self.ethRaised = self.numberOfTickets * self.price * self.feePercent / 100
-                    updateUI('eth_raised', 'Grand prize of ' + self.ethRaised + ' ETH');
-
                     self.latestTime = new Date(gameData.latestTime.timestamp*1000);
                     if (self.startTime > self.latestTime) {
                         updateUI('countdown_text', 'Starting')
@@ -69,9 +60,9 @@ function init() {
                 if(error) {
                     console.error(error)
                 } else {
-                    // any other setup here
-                    //updateEthRaised();
-                    //setupLoops();
+                    setupLoops();
+                    updateAccountBalance();
+                    updateEthRaised();
                 }
             })
         }    
@@ -120,12 +111,36 @@ function updatePrice() {
     }
 }
 
+function updateAccountBalance() {
+    self.Raffle.getBalance(self.currentGameIndex, self.account, function (error, balance) {
+        if (error) {
+            console.log('Error retrieving balance')
+            console.log(error)
+        } else {
+            updateUI('account_balance', '<a title="' + self.account + '">You own ' + balance + ' tickets.</a>');
+        }
+    })
+}
+
+function updateEthRaised() {
+    self.Raffle.getNumberOfTickets(self.currentGameIndex, function (error, numberOfTickets) {
+        if (error) {
+            console.log('Error retrieving number of tickets')
+            console.log(error)
+        } else {
+            self.numberOfTickets = gameData.numberOfTickets.toNumber()
+            self.ethRaised = self.numberOfTickets * self.price * self.feePercent / 100
+            updateUI('eth_raised', 'Grand prize of ' + self.ethRaised + ' ETH')
+        }
+    })
+}
+
 function updateUI(docElementId, html)  {
-    document.getElementById(docElementId).innerHTML = html;
+    document.getElementById(docElementId).innerHTML = html
 }
 
 function weiCost() {
-    var numTickets = parseInt($("#num-tickets").val());
+    var numTickets = parseInt($("#num-tickets").val())
     if (numTickets < 1) {
         numTickets = 1;
     }
@@ -139,11 +154,11 @@ function weiCost() {
 function buyClicked() {
     self.Raffle.play({value: weiCost() }, function(error) {
         if (error) {
-            console.log('Raffle.buyTokens fail');
+            console.log('Tickets could not be bought');
             console.log(error);
         }
         else {
-            console.log('Raffle.buyTokens success');
+            console.log('Tickets successfully bought');
             setTimeout(function() {
                 // Wait for this to be mined for 10 seconds before requesting the value
                 updateAccountBalance();
