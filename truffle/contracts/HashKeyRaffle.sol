@@ -87,7 +87,7 @@ contract HashKeyRaffle is Ownable {
     mapping (uint => Game) games;
 
     // perhaps we can pass some config here (like MAX_DRAW_PERIOD)
-    function HashKeyRaffle() public Ownable() {
+    constructor() public Ownable() {
 
     }
 
@@ -185,7 +185,7 @@ contract HashKeyRaffle is Ownable {
     function getDrawNumber(uint gameId, string _secretKey) private view returns (uint256) {
         require(gameId > 0);
         GameSecurity storage security = games[gameId].security;
-        bytes32 lastBlockHash = block.blockhash(block.number - 1);
+        bytes32 lastBlockHash = blockhash(block.number - 1);
         bytes32 randomHash = sha256(lastBlockHash, security.entropy, _secretKey);
         return uint256(randomHash);
     }
@@ -335,7 +335,7 @@ contract HashKeyRaffle is Ownable {
 
             settings.complete = block.timestamp;
             security.secretKey = _secretKey;
-            security.lastBlockHash = block.blockhash(block.number - 1);
+            security.lastBlockHash = blockhash(block.number - 1);
 
             // if there are fees to pay then calculate them
             if(settings.feePercent > 0) {
