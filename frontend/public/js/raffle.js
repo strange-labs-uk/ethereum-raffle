@@ -199,6 +199,12 @@ $(function() {
     });
     
     $('#num-tickets').keyup(function() {
+        $('#num-tickets-slider').val($('#num-tickets').val())
+        updatePrice()
+    });
+
+    $('#num-tickets-slider').mousemove(function() {
+        $('#num-tickets').val($('#num-tickets-slider').val())
         updatePrice()
     });
 })
