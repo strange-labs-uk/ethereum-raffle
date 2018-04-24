@@ -103,11 +103,10 @@ function getNumberOfTickets(done) {
 }
 
 function updatePrice() {
-    var eth_cost = self.price/10**18;
-    console.log(eth_cost);
+    var eth_cost = weiCost()/10**18
     if (!isNaN(eth_cost)) {
-        var text = 'Buy for ' + eth_cost + ' ETH';
-        $("#btn-buy").val(text);
+        var text = 'Buy for ' + eth_cost + ' ETH'
+        $("#btn-buy").val(text)
     }
 }
 
@@ -200,7 +199,7 @@ $(function() {
     });
     
     $('#num-tickets').keyup(function() {
-        updateCost()
+        updatePrice()
     });
 })
 
