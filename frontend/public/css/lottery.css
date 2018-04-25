@@ -67,6 +67,10 @@ h2{
     transition: all .5s;
   border: none !important;
   border: 2px solid transparent !important;
+  padding: 10px 0 10px 0;
+  max-width: 100px;
+  width: 50%;
+  margin: auto;
 }
 .btn-primary:hover,
 .btn.btn-primary:active, 
@@ -75,10 +79,18 @@ h2{
   background: #FF00C7;
   border: none !important;
   border: 2px solid transparent !important;
+  padding: 10px 0 10px 0;
+  max-width: 100px;
+  width: 50%;
+  margin: auto;
 }
 
 .col-form-label {
 	color: #fff;
+}
+
+.offset-sm-5 {
+  margin: auto;
 }
 
 /* =======================================================
@@ -127,20 +139,28 @@ h2{
   margin-bottom: 30px;
 }
 
+#num-tickets {
+  max-width: 100px;
+  width: 50%;
+  margin: auto;
+  margin-top: 20px;
+}
+
 /* =======================================================
 *   Slider Elements
 * ======================================================= */
 
 .slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 10px;
-    background: #d3d3d3;
-    outline: none;
-    opacity: 0.7;
-    -webkit-transition: .2s;
-    transition: opacity .2s;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 400px;
+  height: 10px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+  border-radius: 10px;
 }
 
 .slider:hover {
@@ -148,17 +168,24 @@ h2{
 }
 
 .slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 25px;
-    height: 25px;
-    background: #FF004D;
-    cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  background: #5C1B91;
+  border-radius: 15px;
+  cursor: pointer;
 }
 
 .slider::-moz-range-thumb {
-    width: 25px;
-    height: 25px;
-    background: #FF004D;
-    cursor: pointer;
+  width: 25px;
+  height: 25px;
+  background: #5C1B91;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: #FF00C7;
+  -webkit-transition: .2s;
+  transition: .2s;
 }
