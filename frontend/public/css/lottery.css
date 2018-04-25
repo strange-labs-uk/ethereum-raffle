@@ -5,7 +5,7 @@
 * ======================================================= */
 
 body{
-	background-image: url(../img/background.png);
+	background-image: url(../img/background-min.png); /* can use png, jpg, gif, webp... */
 	background-repeat: no-repeat;
 	background-position: center;
 	background-position: center;
