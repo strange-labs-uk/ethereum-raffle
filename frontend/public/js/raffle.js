@@ -167,22 +167,6 @@ function buyClicked() {
     });
 }
 
-// throttle calls to the entropy function to 10 times per second
-var _ENTROPY_TIMEOUT_DISABLE = false
-var _ENTROPY_TIMEOUT_GAP = 100
-
-function generateEntropy(){
-    if(_ENTROPY_TIMEOUT_DISABLE) return
-    var randomValues = new Uint32Array(4);
-    window.crypto.getRandomValues(randomValues);
-    self.entropy = randomValues.join('');
-    $('#entropy').text(self.entropy);
-    setTimeout(function() {
-        _ENTROPY_TIMEOUT_DISABLE = false
-    }, _ENTROPY_TIMEOUT_GAP)
-    _ENTROPY_TIMEOUT_DISABLE = true
-}
-
 // /**
 //  * Fired on web page load
 //  */
