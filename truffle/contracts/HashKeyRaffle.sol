@@ -86,11 +86,6 @@ contract HashKeyRaffle is Ownable {
     // the core state database of id -> game
     mapping (uint => Game) games;
 
-    // perhaps we can pass some config here (like MAX_DRAW_PERIOD)
-    constructor() public Ownable() {
-
-    }
-
     /*
 
         HELPERS
@@ -174,7 +169,7 @@ contract HashKeyRaffle is Ownable {
     function verifySecretKey(uint gameId, string _secretKey) public view returns (bool) {
         require(gameId > 0);
         GameSecurity storage security = games[gameId].security;
-        bytes32 givenHash = keccak256(_secretKey);
+        bytes32 givenHash = keccak256(abi.encode(_secretKey));
         return givenHash == security.secretKeyHash;
     }
 
@@ -186,7 +181,7 @@ contract HashKeyRaffle is Ownable {
         require(gameId > 0);
         GameSecurity storage security = games[gameId].security;
         bytes32 lastBlockHash = blockhash(block.number - 1);
-        bytes32 randomHash = sha256(lastBlockHash, security.entropy, _secretKey);
+        bytes32 randomHash = sha256(abi.encode(lastBlockHash, security.entropy, _secretKey));
         return uint256(randomHash);
     }
 
