@@ -17,7 +17,7 @@ contract HashKeyRaffle is Ownable {
         uint minPlayers;        // min number of players
         uint complete;          // record what time the game was paid out or refunded - effectively closed
         uint drawPeriod;        // how many seconds the owner has to call draw after end
-                                    // triggers a refund is this time is passed and draw has not been called
+                                // triggers a refund if this time is passed and draw has not been called
     }
 
     struct GameSecurity
