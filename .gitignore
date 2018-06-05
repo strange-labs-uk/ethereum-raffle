@@ -1,4 +1,5 @@
 build/
+bin/
 node_modules/
 README.html
 .DS_Store

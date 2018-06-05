@@ -4,19 +4,28 @@
   "description": "Lottery DApp using ERC-20 compliant Lottery Token",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./bin/www"
   },
   "author": "Bharat Kunwar",
   "license": "MIT",
   "dependencies": {
+    "body-parser": "^1.18.3",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.9",
+    "drizzle": "^1.1.5",
+    "express": "~4.15.5",
     "ganache-cli": "^6.0.3",
+    "hbs": "~4.0.1",
     "install": "^0.11.0",
     "leftpad": "^0.0.1",
-    "npm": "^5.8.0",
+    "morgan": "~1.9.0",
+    "npm": "^5.10.0",
+    "serve-favicon": "~2.4.5",
     "truffle": "^4.1.11",
     "web3": "github:ethereum/web3.js",
-    "web3-utils": "^1.0.0-beta.29",
-    "zeppelin-solidity": "^1.8.0"
+    "web3-utils": "^1.0.0-beta.34",
+    "zeppelin-solidity": "^1.9.0"
   },
   "devDependencies": {
     "babel-polyfill": "^6.26.0",
@@ -27,8 +36,8 @@
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "chai-bignumber": "^2.0.2",
-    "ethereumjs-util": "^5.1.3",
-    "solium": "^1.1.6"
+    "ethereumjs-util": "^5.2.0",
+    "solium": "^1.1.7"
   },
   "directories": {
     "test": "test"
