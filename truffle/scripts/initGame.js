@@ -4,7 +4,7 @@ const utils = require('web3-utils')
 const secretKey = process.env.SECRET_KEY || 'apple'
 const secretKeyHash = utils.soliditySha3(secretKey)
 
-const price = process.env.TICKET_PRICE ? parseInt(process.env.TICKET_PRICE) : 1000
+const price = process.env.TICKET_PRICE ? parseInt(process.env.TICKET_PRICE) : 100000
 const drawPeriod = process.env.DRAW_PERIOD ? parseInt(process.env.DRAW_PERIOD) : 30
 const start = process.env.START_TIME ? parseInt(process.env.START_TIME) : web3.eth.getBlock('latest').timestamp + 60
 const duration = process.env.DURATION ? parseInt(process.env.DURATION) : (5 * 60)
