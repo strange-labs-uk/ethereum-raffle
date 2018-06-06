@@ -4,12 +4,10 @@ import { increaseTimeTo, duration } from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
 import EVMRevert from './helpers/EVMRevert';
 import { expect } from 'chai'
-import utils from 'web3-utils'
-import leftPad from 'leftpad'
 
 require('events').EventEmitter.prototype._maxListeners = 10000;
 
-const getHash = (st) => utils.soliditySha3(st)
+const getHash = (st) => web3.sha3(st);
 
 //Buffer.from(st, 'utf8').toString('hex'), {encoding: "hex"})
 
@@ -368,6 +366,7 @@ contract('HashKeyRaffle', function (accounts) {
   it('should reject a draw from a non owner', async function () {
     await addThreePlayers(this)
     await increaseTimeTo(this.endTime + duration.hours(1));
+    console.log('here');
     await this.lottery.draw(this.secret, {
       from: accounts[1],
     }).should.be.rejectedWith(EVMRevert);
@@ -377,6 +376,7 @@ contract('HashKeyRaffle', function (accounts) {
 
     await addThreePlayers(this)
     await increaseTimeTo(this.endTime + duration.hours(1));
+    console.log('here')
     await this.lottery.draw(this.secret, {
       from: accounts[0],
     }).should.be.fulfilled;

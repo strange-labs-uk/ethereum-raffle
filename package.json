@@ -25,7 +25,7 @@
     "truffle": "^4.1.11",
     "web3": "github:ethereum/web3.js",
     "web3-utils": "^1.0.0-beta.34",
-    "zeppelin-solidity": "^1.9.0"
+    "zeppelin-solidity": "^1.10.0"
   },
   "devDependencies": {
     "babel-polyfill": "^6.26.0",
