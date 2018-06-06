@@ -14,7 +14,7 @@ const getHash = (st) => web3.sha3(st);
 const BigNumber = web3.BigNumber;
 
 const ticketPrice = (n, unit) => web3.toWei(n, unit || 'milli')
-const largeTicketPrice = (n, unit) => web3.toWei(n*10, unit || 'ether')
+const largeTicketPrice = (n, unit) => web3.toWei(n, unit || 'ether')
 
 const should = require('chai')
   .use(require('chai-as-promised'))

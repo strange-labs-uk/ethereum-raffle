@@ -66,8 +66,6 @@ contract HashKeyRaffle is Ownable {
     event PayRefund(uint gameIndex, address recipient, uint256 amount);
     event PayWinnings(uint gameIndex, address recipient, uint256 amount);
     event PayFees(uint gameIndex, address recipient, uint256 amount);
-    event DebugDraw(bytes32 output);
-    event DebugSecret(string output);
 
     // the max time allowed after a game has ended for the draw to take place
     // once this time has passed - players can refund themselves
@@ -171,9 +169,7 @@ contract HashKeyRaffle is Ownable {
     function verifySecretKey(uint gameId, string _secretKey) public view returns (bool) {
         require(gameId > 0);
         GameSecurity storage security = games[gameId].security;
-        bytes32 givenHash = keccak256(_secretKey);
-        emit DebugDraw(givenHash);
-        emit DebugDraw(security.secretKeyHash);
+        bytes32 givenHash = keccak256(abi.encodePacked(_secretKey));
         return givenHash == security.secretKeyHash;
     }
 
@@ -304,9 +300,9 @@ contract HashKeyRaffle is Ownable {
      */
     function draw(string _secretKey)
         public
-        //onlyOwner
-        //hasGame()
-        //canDrawGame()
+        onlyOwner
+        hasGame()
+        canDrawGame()
     {
         GameSettings storage settings = games[currentGameIndex].settings;
         GameSecurity storage security = games[currentGameIndex].security;
