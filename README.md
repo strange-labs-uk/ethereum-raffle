@@ -4,8 +4,8 @@
 
 To deploy the `HashKeyRaffle` DApp on a truffle server, do the following:
 
+    cd ethereum-raffle
     npm install -g truffle
-    cd ethereum-raffle/truffle
     npm install
     truffle develop
 
@@ -21,7 +21,7 @@ After you have the truffle contract deployed using the instructions above, now y
 
 To serve it:
 
-    cd ethereum-raffle/frontend
+    cd ethereum-raffle
     npm install
     npm start
 
