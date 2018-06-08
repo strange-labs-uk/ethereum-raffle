@@ -5,3 +5,5 @@ README.html
 .DS_Store
 .python-version
 *.swp
+.cache
+dist

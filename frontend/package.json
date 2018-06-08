@@ -1,0 +1,22 @@
+{
+  "name": "ethereum-raffle-frontend",
+  "version": "2.0.0",
+  "description": "Ethereum based raffle",
+  "scripts": {
+    "watch": "parcel src/index.html --log-level 3 --hmr-port 8080 --no-autoinstall",
+    "build": "parcel build src/index.html --public-url ./ --no-autoinstall"
+  },
+  "author": "Strange Labs",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^2.6.1",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-es2015-destructuring": "^6.23.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "parcel-bundler": "^1.7.1"
+  }
+}
