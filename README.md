@@ -31,3 +31,14 @@ npm run compile
 npm run migrate
 npm run test
 ```
+
+## run frontend
+
+To run the frontend in hot reloading mode:
+
+```bash
+cd frontend
+npm run watch
+```
+
+Then open your browser to [http://localhost:1234](http://localhost:1234)
