@@ -1,45 +1,26 @@
 {
-  "name": "lottery",
-  "version": "1.0.0",
-  "description": "Lottery DApp using ERC-20 compliant Lottery Token",
-  "main": "index.js",
+  "name": "ethereum-raffle",
+  "version": "2.0.0",
+  "description": "Ethereum based raffle",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./www"
+    "develop": "./node_modules/.bin/truffle develop",
+    "compile": "./node_modules/.bin/truffle compile",
+    "migrate": "./node_modules/.bin/truffle migrate",
+    "test": "./node_modules/.bin/truffle test"
   },
-  "author": "Bharat Kunwar",
+  "author": "Strange Labs",
   "license": "MIT",
   "dependencies": {
-    "body-parser": "^1.18.3",
-    "cookie-parser": "~1.4.3",
-    "debug": "~2.6.9",
-    "drizzle": "^1.1.5",
-    "express": "~4.15.5",
-    "ganache-cli": "^6.0.3",
-    "hbs": "~4.0.1",
-    "install": "^0.11.0",
-    "leftpad": "^0.0.1",
-    "morgan": "~1.9.0",
-    "npm": "^5.10.0",
-    "serve-favicon": "~2.4.5",
-    "truffle": "^4.1.11",
-    "web3": "github:ethereum/web3.js",
-    "web3-utils": "^1.0.0-beta.34",
     "zeppelin-solidity": "^1.10.0"
   },
   "devDependencies": {
     "babel-polyfill": "^6.26.0",
-    "babel-preset-es2015": "^6.18.0",
-    "babel-preset-stage-2": "^6.24.1",
-    "babel-preset-stage-3": "^6.17.0",
+    "babel-preset-env": "^1.7.0",
     "babel-register": "^6.26.0",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
     "chai-bignumber": "^2.0.2",
     "ethereumjs-util": "^5.2.0",
-    "solium": "^1.1.7"
-  },
-  "directories": {
-    "test": "test"
+    "truffle": "^4.1.11"
   }
 }
