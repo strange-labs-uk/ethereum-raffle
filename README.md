@@ -36,6 +36,13 @@ To deploy a contract to the blockchain after tests have passed:
 ```bash
 npm run compile
 npm run migrate
+npm run initgame
+```
+
+Alternatively, run all three commands at the same time by doing:
+
+```bash
+npm run deploy
 ```
 
 You can enter development console mode (previously `truffle develop`):

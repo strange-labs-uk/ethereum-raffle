@@ -1,8 +1,7 @@
 const HashKeyRaffle = artifacts.require('HashKeyRaffle')
-const utils = require('web3-utils')
 
 const secretKey = process.env.SECRET_KEY || 'apple'
-const secretKeyHash = utils.soliditySha3(secretKey)
+const secretKeyHash = web3.sha3(secretKey)
 
 const price = process.env.TICKET_PRICE ? parseInt(process.env.TICKET_PRICE) : 100000
 const drawPeriod = process.env.DRAW_PERIOD ? parseInt(process.env.DRAW_PERIOD) : 30
