@@ -1,0 +1,24 @@
+{
+  "presets": ["env", "react"],
+  "env": {
+    "development": {
+      "plugins": [
+        ["transform-runtime", {"polyfill": false, "regenerator": true}], 
+        "transform-es2015-destructuring",
+        "transform-object-rest-spread",
+        "transform-decorators-legacy",
+        "transform-class-properties",
+        "react-hot-loader/babel"
+      ]
+    },
+    "production": {
+      "plugins": [
+        ["transform-runtime", {"polyfill": false, "regenerator": true}], 
+        "transform-es2015-destructuring",
+        "transform-object-rest-spread",
+        "transform-decorators-legacy",
+        "transform-class-properties",
+      ]
+    }
+  }
+}
