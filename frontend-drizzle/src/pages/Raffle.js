@@ -45,7 +45,7 @@ const styles = theme => ({
 @reduxForm({
   form: 'raffle',
   initialValues: {
-    currentGameIndex: '',
+    currentGameIndex: null,
   }
 })
 @connectStore({
@@ -59,13 +59,17 @@ const styles = theme => ({
 
     const account = state.accounts[0]
     
-    const requestRef = state.contracts.HashKeyRaffle.currentGameIndex[state.raffle.currentGameIndexRequestKey]
+    const currentGameIndexRef = state.contracts.HashKeyRaffle.currentGameIndex[state.raffle.currentGameIndexKey]
+    let currentGameIndex = null
+    if (currentGameIndexRef) {
+      state.raffle.currentGameIndex = currentGameIndex = currentGameIndexRef.value
+    }
 
-    let currentGameIndex = ''
-
-    // Where there is a result
-    if (requestRef) {
-      currentGameIndex = requestRef.value
+    const gameSettingsRef = state.contracts.HashKeyRaffle.getGameSettings[state.raffle.gameSettingsKey]
+    let gameSettings = {}
+    if (gameSettingsRef) {
+      const gameSettingsKeys = ['price', 'feePercent', 'start', 'end', 'complete', 'drawPeriod', 'minPlayers']
+      state.raffle.gameSettings = gameSettings = gameSettingsKeys.reduce((obj, k, i) => ({...obj, [k]: gameSettingsRef.value[i] }), {})
     }
 
     return {
@@ -73,6 +77,7 @@ const styles = theme => ({
       formErrors,
       formValid,
       currentGameIndex,
+      gameSettings,
       account,
     }
   },
@@ -111,6 +116,13 @@ class Raffle extends React.Component {
     raffle.loadCurrentGameIndex(this.drizzle)
   }
 
+  componentDidUpdate(prevProps) {
+    const { raffle, currentGameIndex } = this.props
+    if (currentGameIndex !== prevProps.currentGameIndex) {
+      raffle.loadGameSettings(this.drizzle, currentGameIndex)
+    }
+  }
+
   render() {
     const {
       classes,
@@ -119,9 +131,9 @@ class Raffle extends React.Component {
       formValid,
       raffle,
       currentGameIndex,
+      gameSettings,
       account,
     } = this.props
-
 
     return (
       <div className={classes.root}>

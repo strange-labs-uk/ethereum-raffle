@@ -14,7 +14,8 @@ const drizzleOptions = {
     HashKeyRaffle,
   ],
   events: {
-    KeyValue: ['ValueUpdated']
+    KeyValue: ['ValueUpdated'],
+    HashKeyRaffle: ['GameCreated'],
   },
   polls: {
     accounts: 1500,
