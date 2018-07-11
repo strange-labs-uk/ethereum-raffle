@@ -15,6 +15,7 @@ import drizzleOptions from '../drizzleOptions'
 import { routes } from '../router'
 import snackbar from './snackbar'
 import storage from './storage'
+import raffle from './raffle'
 
 const history = createHistory()
 const router = connectRoutes(history, routes) 
@@ -22,6 +23,7 @@ const router = connectRoutes(history, routes)
 const modules = [
   snackbar,
   storage,
+  raffle,
 ]
 
 const drizzleSagaRoot = function*() {

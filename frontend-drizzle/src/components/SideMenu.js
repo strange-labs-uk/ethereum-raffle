@@ -61,6 +61,9 @@ class SideMenu extends React.Component {
   getMenu() {
     const { } = this.props
     return [
+      <ListItem button key='raffle' onClick={ () => this.openPage('PAGE_RAFFLE') }>
+        <ListItemText primary="Raffle" />
+      </ListItem>,
       <ListItem button key='value' onClick={ () => this.openPage('PAGE_VALUE') }>
         <ListItemText primary="Key Values" />
       </ListItem>,

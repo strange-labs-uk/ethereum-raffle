@@ -13,8 +13,6 @@ import Link from 'redux-first-router-link'
 import validators from '../utils/validators'
 import TextField from '../components/TextField'
 
-import storageModule from '../store/storage'
-
 const styles = theme => ({
   root: {
     padding: theme.spacing.unit * 2,

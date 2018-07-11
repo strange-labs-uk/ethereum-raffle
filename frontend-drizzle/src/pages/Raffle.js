@@ -16,7 +16,7 @@ import FormControl from '@material-ui/core/FormControl'
 import validators from '../utils/validators'
 import TextField from '../components/TextField'
 
-import storageModule from '../store/storage'
+import raffleModule from '../store/raffle'
 
 const styles = theme => ({
   root: {
@@ -43,45 +43,36 @@ const styles = theme => ({
 })
 
 @reduxForm({
-  form: 'storage',
+  form: 'raffle',
   initialValues: {
-    key: '',
-    value:'',
+    currentGameIndex: '',
   }
 })
 @connectStore({
-  storage: storageModule,
+  raffle: raffleModule,
 })
 @connect(
   (state, ownProps) => {
-    const formValues = state.form.storage.values
-    const formErrors = getFormSyncErrors('storage')(state)
-    const formValid = isValid('storage')(state)
+    const formValues = state.form.raffle.values
+    const formErrors = getFormSyncErrors('raffle')(state)
+    const formValid = isValid('raffle')(state)
 
     const account = state.accounts[0]
     
-    let currentKey = ""
-    let currentValue = ""
+    const requestRef = state.contracts.HashKeyRaffle.currentGameIndex[state.raffle.currentGameIndexRequestKey]
 
-    // get the key used to represent the call to the "getValue"
-    // function of the contract - we use this to get at the actual value below
-    const readValuesRequestKey = state.storage.currentValueRequestKey
+    let currentGameIndex = ''
 
-    // get the actual reference to the request itself via drizzle
-    const readValuesRequestRef = state.contracts.KeyValue.getValue[readValuesRequestKey]
-
-    // oh look - we have a result back from the contract
-    if(readValuesRequestRef) {
-      currentKey = readValuesRequestRef.value[0]
-      currentValue = readValuesRequestRef.value[1]
+    // Where there is a result
+    if (requestRef) {
+      currentGameIndex = requestRef.value
     }
 
     return {
       formValues,
       formErrors,
       formValid,
-      currentKey,
-      currentValue,
+      currentGameIndex,
       account,
     }
   },
@@ -91,7 +82,7 @@ const styles = theme => ({
     }
   }
 )
-class Storage extends React.Component {
+class Raffle extends React.Component {
 
   /*
   
@@ -116,21 +107,21 @@ class Storage extends React.Component {
     
   */
   componentDidMount() {
-    const { storage } = this.props
-    storage.loadCurrentValues(this.drizzle)
+    const { raffle } = this.props
+    raffle.loadCurrentGameIndex(this.drizzle)
   }
 
   render() {
-    const { 
+    const {
       classes,
       formValues,
       formErrors,
       formValid,
-      storage,
-      currentKey,
-      currentValue,
+      raffle,
+      currentGameIndex,
       account,
     } = this.props
+
 
     return (
       <div className={classes.root}>
@@ -145,14 +136,8 @@ class Storage extends React.Component {
               </Typography>
               <FormControl component="fieldset" className={ classes.formControl }>
                 <Field
-                  name="key"
-                  label="Key"
-                  component={ TextField }
-                  validate={ validators.required }
-                />
-                <Field
-                  name="value"
-                  label="Value"
+                  name="currentGameIndex"
+                  label="currentGameIndex"
                   component={ TextField }
                   validate={ validators.required }
                 />
@@ -162,7 +147,7 @@ class Storage extends React.Component {
                   disabled={ formValid ? false : true }
                   className={ classes.button }
                   onClick={ () => {
-                    storage.writeCurrentValues(this.drizzle, formValues)
+                    raffle.writeCurrentValues(this.drizzle, formValues)
                   } }>
                   Save Value!
                 </Button>
@@ -172,15 +157,11 @@ class Storage extends React.Component {
           <Grid item xs={12} sm={6}>
             <Paper className={classes.paper}>
               <Typography variant="body2">
-                Current Key / Value
+                Current Game Index
               </Typography>
               <Divider className={ classes.marginDivider } />
               <Typography variant="body2">
-                <b>Key: </b> { currentKey }
-              </Typography>
-              <Divider className={ classes.marginDivider } />
-              <Typography variant="body2">
-                <b>Value: </b> { currentValue }
+                <b>Index: </b> { currentGameIndex }
               </Typography>
             </Paper>
           </Grid>
@@ -190,8 +171,8 @@ class Storage extends React.Component {
   }
 }
 
-Storage.propTypes = {
+Raffle.propTypes = {
   classes: PropTypes.object.isRequired,
 }
 
-export default withStyles(styles)(Storage)
+export default withStyles(styles)(Raffle)

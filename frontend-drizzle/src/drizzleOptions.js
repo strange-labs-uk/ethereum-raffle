@@ -1,4 +1,5 @@
 import KeyValue from '../../build/contracts/KeyValue.json'
+import HashKeyRaffle from '../../build/contracts/HashKeyRaffle.json'
 
 const drizzleOptions = {
   web3: {
@@ -10,6 +11,7 @@ const drizzleOptions = {
   },
   contracts: [
     KeyValue,
+    HashKeyRaffle,
   ],
   events: {
     KeyValue: ['ValueUpdated']

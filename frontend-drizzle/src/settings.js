@@ -1,5 +1,5 @@
 const SETTINGS = {
-  title: 'Ethereum Key Value Store',
+  title: 'Ethereum Raffle',
 }
 
 export default SETTINGS

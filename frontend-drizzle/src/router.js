@@ -2,14 +2,19 @@ import React from 'react'
 
 import Layout from './pages/Layout'
 import Storage from './pages/Storage'
+import Raffle from './pages/Raffle'
 import Help from './pages/Help'
 import Web3Wrapper from './pages/Web3Wrapper'
 
 import withRouter from './utils/withRouter'
 
 export const routes = {
-  'PAGE_VALUE': {
+  'PAGE_RAFFLE': {
     path: '/',
+    component: Raffle
+  },
+  'PAGE_VALUE': {
+    path: '/value',
     component: Storage
   },
   'PAGE_HELP': {
