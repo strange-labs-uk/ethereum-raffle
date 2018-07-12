@@ -34,6 +34,9 @@ class Help extends React.Component {
     return (
       <div className={classes.root}>
         <Grid container spacing={24}>
+          <Grid item xs={12} sm={3}>
+            
+          </Grid>
           <Grid item xs={12} sm={6}>
             <Paper className={classes.paper}>
               <Typography variant="body2">
@@ -41,7 +44,7 @@ class Help extends React.Component {
               </Typography>
             </Paper>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={3}>
             
           </Grid>
         </Grid>

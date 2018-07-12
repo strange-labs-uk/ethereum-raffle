@@ -12,6 +12,11 @@ import Link from 'redux-first-router-link'
 import Button from '@material-ui/core/Button'
 import Divider from '@material-ui/core/Divider'
 import FormControl from '@material-ui/core/FormControl'
+import Table from '@material-ui/core/Table'
+import TableBody from '@material-ui/core/TableBody'
+import TableCell from '@material-ui/core/TableCell'
+import TableHead from '@material-ui/core/TableHead'
+import TableRow from '@material-ui/core/TableRow'
 
 import validators from '../utils/validators'
 import TextField from '../components/TextField'
@@ -66,10 +71,14 @@ const styles = theme => ({
     }
 
     const gameSettingsRef = state.contracts.HashKeyRaffle.getGameSettings[state.raffle.gameSettingsKey]
-    let gameSettings = {}
+    let gameSettings = []
     if (gameSettingsRef) {
-      const gameSettingsKeys = ['price', 'feePercent', 'start', 'end', 'complete', 'drawPeriod', 'minPlayers']
-      state.raffle.gameSettings = gameSettings = gameSettingsKeys.reduce((obj, k, i) => ({...obj, [k]: gameSettingsRef.value[i] }), {})
+      const gameSettingsKeys = ['Price', 'Fee (%)', 'Starts', 'Ends', 'Complete', 'Draw Period (s)', 'Minimum Players']
+      const same = x => x
+      const date = x => new Date(x*1000).toString()
+
+      const gameSettingsTransform = [same, same, date, date, same, same, same]
+      state.raffle.gameSettings = gameSettings = gameSettingsKeys.map((k, i) => ({key: k, value: gameSettingsTransform[i](gameSettingsRef.value[i])}))
     }
 
     return {
@@ -135,6 +144,7 @@ class Raffle extends React.Component {
       account,
     } = this.props
 
+    console.dir(gameSettings)    
     return (
       <div className={classes.root}>
         <Grid container spacing={24}>
@@ -169,12 +179,25 @@ class Raffle extends React.Component {
           <Grid item xs={12} sm={6}>
             <Paper className={classes.paper}>
               <Typography variant="body2">
-                Current Game Index
+                Current Game Settings
               </Typography>
               <Divider className={ classes.marginDivider } />
-              <Typography variant="body2">
-                <b>Index: </b> { currentGameIndex }
-              </Typography>
+              <Table className={classes.table}>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>Game #</TableCell>  
+                    <TableCell numeric>{currentGameIndex}</TableCell>  
+                  </TableRow>
+                  {gameSettings.map((item, index) => {
+                    return (
+                      <TableRow key={index}>
+                        <TableCell>{item.key}</TableCell>
+                        <TableCell numeric>{item.value}</TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
             </Paper>
           </Grid>
         </Grid>
