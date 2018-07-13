@@ -37,13 +37,13 @@ const actions = {
     type: 'REQUEST_GAME_SETTINGS',
     key,
 }),
-  writeCurrentValues: (drizzle, values) => ({
-    type: 'WRITE_CURRENT_VALUES',
+  buyTickets: (drizzle, values) => ({
+    type: 'BUY_TICKETS',
     drizzle,
     values,
   }),
-  setWriteCurrentValuesRequestStackId: (stackId) => ({
-    type: 'SET_WRITE_CURRENT_VALUES_STACK_ID',
+  requestBuyTickets: (stackId) => ({
+    type: 'REQUEST_BUY_TICKETS',
     stackId,
   }),
 }
@@ -54,6 +54,9 @@ const mutations = {
   },
   REQUEST_GAME_SETTINGS: (state, action) => {
     state.gameSettingsKey = action.key
+  },
+  REQUEST_BUY_TICKETS: (state, action) => {
+    state.buyStackId = action.stackId
   },
 }
 

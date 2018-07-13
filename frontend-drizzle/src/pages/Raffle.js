@@ -17,6 +17,7 @@ import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
+import Slider from '@material-ui/lab/Slider';
 
 import validators from '../utils/validators'
 import TextField from '../components/TextField'
@@ -50,7 +51,7 @@ const styles = theme => ({
 @reduxForm({
   form: 'raffle',
   initialValues: {
-    currentGameIndex: null,
+    numTickets: null,
   }
 })
 @connectStore({
@@ -72,13 +73,25 @@ const styles = theme => ({
 
     const gameSettingsRef = state.contracts.HashKeyRaffle.getGameSettings[state.raffle.gameSettingsKey]
     let gameSettings = []
+    let price = null
+    let feePercent = null
+    let startTime = null
+    let endTime = null
+    let complete = null
+    let drawPeriod = null
+    let minPlayers = null
     if (gameSettingsRef) {
-      const gameSettingsKeys = ['Price', 'Fee (%)', 'Starts', 'Ends', 'Complete', 'Draw Period (s)', 'Minimum Players']
-      const same = x => x
+      // const gameSettingsKeys = ['Price', 'Fee (%)', 'Starts', 'Ends', 'Complete', 'Draw Period (s)', 'Minimum Players']
       const date = x => new Date(x*1000).toString()
-
-      const gameSettingsTransform = [same, same, date, date, same, same, same]
-      state.raffle.gameSettings = gameSettings = gameSettingsKeys.map((k, i) => ({key: k, value: gameSettingsTransform[i](gameSettingsRef.value[i])}))
+      const values = gameSettingsRef.value
+      state.raffle.gameSettings = gameSettings = [
+        { key: 'Current Game', value: currentGameIndex },
+        { key: 'Price (wei)', value: values[0] },
+        { key: 'Fee (%)', value: values[1] },
+        { key: 'Starts', value: date(values[2]) },
+        { key: 'Ends', value: date(values[3]) },
+        { key: 'Minimum Players', value: values[6] },
+      ]
     }
 
     return {
@@ -106,6 +119,14 @@ class Raffle extends React.Component {
   */
   static contextTypes = {
     drizzle: PropTypes.object
+  }
+
+  state = {
+    numTickets: 1,
+  }
+
+  handleSliderChange = (event, numTickets) => {
+    this.setState({ numTickets })
   }
 
   constructor (props, context) {
@@ -143,6 +164,10 @@ class Raffle extends React.Component {
       gameSettings,
       account,
     } = this.props
+    
+    const { numTickets } = this.state;
+
+    const price = numTickets*(gameSettings[1]?gameSettings[1].value:null)
 
     console.dir(gameSettings)    
     return (
@@ -157,21 +182,16 @@ class Raffle extends React.Component {
                 <b>Account: </b> { account }
               </Typography>
               <FormControl component="fieldset" className={ classes.formControl }>
-                <Field
-                  name="currentGameIndex"
-                  label="currentGameIndex"
-                  component={ TextField }
-                  validate={ validators.required }
-                />
+                <Slider value={numTickets} min={1} max={100} step={1} onChange={this.handleSliderChange}/>
                 <Button 
                   variant="raised" 
                   color="primary" 
                   disabled={ formValid ? false : true }
                   className={ classes.button }
                   onClick={ () => {
-                    raffle.writeCurrentValues(this.drizzle, formValues)
+                    raffle.buyTickets(this.drizzle, formValues)
                   } }>
-                  Save Value!
+                  Buy {numTickets} tickets for {price} wei!
                 </Button>
               </FormControl>
             </Paper>
@@ -184,10 +204,6 @@ class Raffle extends React.Component {
               <Divider className={ classes.marginDivider } />
               <Table className={classes.table}>
                 <TableBody>
-                  <TableRow>
-                    <TableCell>Game #</TableCell>  
-                    <TableCell numeric>{currentGameIndex}</TableCell>  
-                  </TableRow>
                   {gameSettings.map((item, index) => {
                     return (
                       <TableRow key={index}>
