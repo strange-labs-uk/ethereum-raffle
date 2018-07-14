@@ -37,14 +37,15 @@ const actions = {
     type: 'REQUEST_GAME_SETTINGS',
     key,
 }),
-  buyTickets: (drizzle, values) => ({
+  buyTickets: (drizzle, price) => ({
     type: 'BUY_TICKETS',
     drizzle,
-    values,
+    price,
   }),
-  requestBuyTickets: (stackId) => ({
-    type: 'REQUEST_BUY_TICKETS',
-    stackId,
+  requestTickets: (requestTicketKey, price) => ({
+    type: 'REQUEST_TICKETS',
+    requestTicketKey,
+    price,
   }),
 }
 
@@ -55,8 +56,9 @@ const mutations = {
   REQUEST_GAME_SETTINGS: (state, action) => {
     state.gameSettingsKey = action.key
   },
-  REQUEST_BUY_TICKETS: (state, action) => {
-    state.buyStackId = action.stackId
+  REQUEST_TICKETS: (state, action) => {
+    state.requestTicketKey = action.requestTicketKey
+    state.price = action.price
   },
 }
 
@@ -78,6 +80,19 @@ const sagas = createSagas(
           const requestKey = action.drizzle.contracts.HashKeyRaffle.methods.getGameSettings.cacheCall(action.gameIndex)
           yield put(actions.requestGameSettings(requestKey))
           yield put(snackbar.actions.setMessage('Reading gameSettings from contract'))
+        }
+        catch(err){
+          yield put(snackbar.actions.setError(err))
+        }
+      },
+      BUY_TICKETS: function* (action) {
+        try {    
+          const drizzle = action.drizzle
+          const price = action.price
+          const requestTicketKey = drizzle.contracts.HashKeyRaffle.methods.play.cacheSend({value: price})
+          yield put(actions.requestTickets(requestTicketKey, price))
+          yield put(initialize('price', {}))
+          yield put(snackbar.actions.setMessage('Complete transaction on MetaMask'))
         }
         catch(err){
           yield put(snackbar.actions.setError(err))

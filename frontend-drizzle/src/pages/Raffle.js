@@ -169,7 +169,6 @@ class Raffle extends React.Component {
 
     const price = numTickets*(gameSettings[1]?gameSettings[1].value:null)
 
-    console.dir(gameSettings)    
     return (
       <div className={classes.root}>
         <Grid container spacing={24}>
@@ -189,9 +188,9 @@ class Raffle extends React.Component {
                   disabled={ formValid ? false : true }
                   className={ classes.button }
                   onClick={ () => {
-                    raffle.buyTickets(this.drizzle, formValues)
+                    raffle.buyTickets(this.drizzle, price)
                   } }>
-                  Buy {numTickets} tickets for {price} wei!
+                  Buy {numTickets} tickets for {price} wei
                 </Button>
               </FormControl>
             </Paper>
