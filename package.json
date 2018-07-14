@@ -9,7 +9,7 @@
     "migrate": "./node_modules/.bin/truffle migrate --reset --network ganache",
     "initgame": "./node_modules/.bin/truffle exec scripts/initGame.js --network ganache",
     "deploy": "npm run compile && npm run migrate && npm run initgame",
-    "test": "./node_modules/.bin/truffle test --network ganache"
+    "test": "./node_modules/.bin/truffle test --network develop"
   },
   "author": "Strange Labs",
   "license": "MIT",
