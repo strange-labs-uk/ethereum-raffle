@@ -6,6 +6,9 @@
     "watch": "parcel src/index.html --log-level 3 --hmr-port 8080 --no-autoinstall",
     "build": "parcel build src/index.html --public-url ./ --no-autoinstall"
   },
+  "alias": {
+    "contracts": "../build/contracts"
+  }, 
   "author": "Strange Labs",
   "license": "MIT",
   "dependencies": {

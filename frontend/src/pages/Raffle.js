@@ -73,13 +73,6 @@ const styles = theme => ({
 
     const gameSettingsRef = state.contracts.HashKeyRaffle.getGameSettings[state.raffle.gameSettingsKey]
     let gameSettings = []
-    let price = null
-    let feePercent = null
-    let startTime = null
-    let endTime = null
-    let complete = null
-    let drawPeriod = null
-    let minPlayers = null
     if (gameSettingsRef) {
       // const gameSettingsKeys = ['Price', 'Fee (%)', 'Starts', 'Ends', 'Complete', 'Draw Period (s)', 'Minimum Players']
       const date = x => new Date(x*1000).toString()
@@ -94,10 +87,24 @@ const styles = theme => ({
       ]
     }
 
+    const balancesRef = state.contracts.HashKeyRaffle.getBalances[state.raffle.balancesKey]
+    let balances = []
+    if (balancesRef) {
+      state.raffle.balances = balances = balancesRef.value
+    }
+
+    let ticketsPurchased = null
+    // const ticketsPurchasedRef = state.contracts.HashKeyRaffle.play[state.raffle.ticketsPurchasedKey]
+    const txHash = state.transactionStack[state.raffle.ticketsPurchasedId]
+    if (txHash) {
+      state.raffle.ticketsPurchased = ticketsPurchased = state.transactions[txHash].status
+    }
+
     return {
       formValues,
       formErrors,
       formValid,
+      ticketsPurchased,
       currentGameIndex,
       gameSettings,
       account,
@@ -150,6 +157,7 @@ class Raffle extends React.Component {
     const { raffle, currentGameIndex } = this.props
     if (currentGameIndex !== prevProps.currentGameIndex) {
       raffle.loadGameSettings(this.drizzle, currentGameIndex)
+      raffle.loadBalances(this.drizzle, currentGameIndex)
     }
   }
 
@@ -159,6 +167,7 @@ class Raffle extends React.Component {
       formValues,
       formErrors,
       formValid,
+      ticketsPurchased,
       raffle,
       currentGameIndex,
       gameSettings,

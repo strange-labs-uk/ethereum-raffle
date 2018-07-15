@@ -17,7 +17,7 @@ function init() {
                     console.log("web3.version.getNetwork success")
                     self.network_id = parseInt(result)
 
-                    $.getJSON("/ws/HashKeyRaffle.json", function(def) {
+                    $.getJSON("./HashKeyRaffle.json", function(def) {
                         // Retrieved the contract from the local geth node
                         self.Raffle = web3.eth.contract(def['abi'])
                                         .at(def.networks[self.network_id].address)
