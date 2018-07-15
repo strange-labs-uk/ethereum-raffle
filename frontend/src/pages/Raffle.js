@@ -71,27 +71,34 @@ const styles = theme => ({
       state.raffle.currentGameIndex = currentGameIndex = currentGameIndexRef.value
     }
 
+    const balancesRef = state.contracts.HashKeyRaffle.getBalances[state.raffle.balancesKey]
+    let balances = {}
+    let totalTicketsBought = 0
+    if (balancesRef) {
+      const zip = xs => ys => xs.reduce( (obj, x, i) => ({ ...obj, [x]: ys[i] }), {})
+      totalTicketsBought = balancesRef.value[1].reduce( (obj, y) => obj + y)
+      state.raffle.balances = balances = zip(balancesRef.value[0])(balancesRef.value[1])
+    }
+
     const gameSettingsRef = state.contracts.HashKeyRaffle.getGameSettings[state.raffle.gameSettingsKey]
     let gameSettings = []
+    let price = null
     if (gameSettingsRef) {
       // const gameSettingsKeys = ['Price', 'Fee (%)', 'Starts', 'Ends', 'Complete', 'Draw Period (s)', 'Minimum Players']
       const date = x => new Date(x*1000).toString()
       const values = gameSettingsRef.value
+      price = values[0]
       state.raffle.gameSettings = gameSettings = [
+        { key: 'Total tickets bought', value: totalTicketsBought},
+        { key: 'Tickets owned', value: balances[account]},
         { key: 'Current Game', value: currentGameIndex },
-        { key: 'Price (wei)', value: values[0] },
+        { key: 'Price (wei)', value: price },
         { key: 'Fee (%)', value: values[1] },
         { key: 'Starts', value: date(values[2]) },
         { key: 'Ends', value: date(values[3]) },
         { key: 'Minimum Players', value: values[6] },
       ]
-    }
-
-    const balancesRef = state.contracts.HashKeyRaffle.getBalances[state.raffle.balancesKey]
-    let balances = []
-    if (balancesRef) {
-      state.raffle.balances = balances = balancesRef.value
-    }
+    }    
 
     let ticketsPurchased = null
     // const ticketsPurchasedRef = state.contracts.HashKeyRaffle.play[state.raffle.ticketsPurchasedKey]
@@ -104,6 +111,7 @@ const styles = theme => ({
       formValues,
       formErrors,
       formValid,
+      price,
       ticketsPurchased,
       currentGameIndex,
       gameSettings,
@@ -167,6 +175,7 @@ class Raffle extends React.Component {
       formValues,
       formErrors,
       formValid,
+      price,
       ticketsPurchased,
       raffle,
       currentGameIndex,
@@ -176,7 +185,7 @@ class Raffle extends React.Component {
     
     const { numTickets } = this.state;
 
-    const price = numTickets*(gameSettings[1]?gameSettings[1].value:null)
+    const totalPrice = numTickets*price
 
     return (
       <div className={classes.root}>
@@ -197,9 +206,9 @@ class Raffle extends React.Component {
                   disabled={ formValid ? false : true }
                   className={ classes.button }
                   onClick={ () => {
-                    raffle.buyTickets(this.drizzle, account, price)
+                    raffle.buyTickets(this.drizzle, account, totalPrice)
                   } }>
-                  Buy {numTickets} tickets for {price} wei
+                  Buy {numTickets} tickets for {totalPrice} wei
                 </Button>
               </FormControl>
             </Paper>
