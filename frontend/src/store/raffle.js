@@ -50,8 +50,9 @@ const actions = {
     type: 'REQUEST_BALANCES',
     key,
   }),
-  buyTickets: (drizzle, price) => ({
+  buyTickets: (drizzle, account, price) => ({
     type: 'BUY_TICKETS',
+    account,
     drizzle,
     price,
   }),
@@ -111,7 +112,7 @@ const sagas = createSagas(
       },
       BUY_TICKETS: function* (action) {
         try {    
-          const stackId = action.drizzle.contracts.HashKeyRaffle.methods.play.cacheSend({value: action.price})
+          const stackId = action.drizzle.contracts.HashKeyRaffle.methods.play.cacheSend({from: action.account, value: action.price})
           yield put(actions.requestTickets(stackId))
           yield put(initialize('price', {}))
           yield put(snackbar.actions.setMessage('Complete transaction on MetaMask'))

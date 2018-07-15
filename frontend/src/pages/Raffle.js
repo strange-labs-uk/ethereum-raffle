@@ -197,7 +197,7 @@ class Raffle extends React.Component {
                   disabled={ formValid ? false : true }
                   className={ classes.button }
                   onClick={ () => {
-                    raffle.buyTickets(this.drizzle, price)
+                    raffle.buyTickets(this.drizzle, account, price)
                   } }>
                   Buy {numTickets} tickets for {price} wei
                 </Button>
