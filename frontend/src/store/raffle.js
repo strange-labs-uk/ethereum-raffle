@@ -114,7 +114,7 @@ const sagas = createSagas(
         try {    
           const stackId = action.drizzle.contracts.HashKeyRaffle.methods.play.cacheSend({from: action.account, value: action.price})
           yield put(actions.requestTickets(stackId))
-          yield put(initialize('price', {}))
+          yield put(initialize('numTickets', {}))
           yield put(snackbar.actions.setMessage('Complete transaction on MetaMask'))
         }
         catch(err){

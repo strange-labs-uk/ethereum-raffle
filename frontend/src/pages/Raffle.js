@@ -13,6 +13,8 @@ import Button from '@material-ui/core/Button'
 import Divider from '@material-ui/core/Divider'
 import FormControl from '@material-ui/core/FormControl'
 
+import Input from '@material-ui/core/Input'
+
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
@@ -20,8 +22,9 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 import validators from '../utils/validators'
 
-import Slider from '@material-ui/lab/Slider';
+import Slider from '@material-ui/lab/Slider'
 import TextField from '../components/TextField'
+import StepSlider from '../components/StepSlider'
 
 import raffleModule from '../store/raffle'
 
@@ -60,6 +63,9 @@ const styles = theme => ({
 })
 @connect(
   (state, ownProps) => {
+
+    console.log(state)
+    console.log(ownProps)
     const formValues = state.form.raffle.values
     const formErrors = getFormSyncErrors('raffle')(state)
     const formValid = isValid('raffle')(state)
@@ -72,38 +78,44 @@ const styles = theme => ({
       state.raffle.currentGameIndex = currentGameIndex = currentGameIndexRef.value
     }
 
+    const gameSettingsRef = state.contracts.HashKeyRaffle.getGameSettings[state.raffle.gameSettingsKey]
+    let gameSettings = []
+    let gameStatus = []
+    let price = null
+    let ticketsOwned = 0
+    if (gameSettingsRef) {
+      // const gameSettingsKeys = ['Price', 'Fee (%)', 'Starts', 'Ends', 'Complete', 'Draw Period (s)', 'Minimum Players']
+      const date = x => new Date(x*1000).toString()
+      const values = gameSettingsRef.value
+      price = values[0]
+      state.raffle.gameSettings = gameSettings = [
+        { key: 'Starts', value: date(values[2]) },
+        { key: 'Ends', value: date(values[3]) },
+        { key: 'Game number', value: currentGameIndex },
+        { key: 'Cost (WEI)/ticket', value: price },
+        { key: 'Fee (%)', value: values[1] },
+        { key: 'Minimum players', value: values[6] },
+      ]
+    }    
+
     const balancesRef = state.contracts.HashKeyRaffle.getBalances[state.raffle.balancesKey]
     let balances = {}
     let totalTicketsBought = 0
     if (balancesRef) {
       const zip = xs => ys => xs.reduce( (obj, x, i) => ({ ...obj, [x]: ys[i] }), {})
-      if (balancesRef.value[1].length > 0) {
-        totalTicketsBought = balancesRef.value[1].reduce( (obj, y) => obj + y)
+      const numberOfPlayers = balancesRef.value[1].length
+      if (numberOfPlayers > 0) {
+        totalTicketsBought = balancesRef.value[1].reduce( (obj, y) => parseInt(obj) + parseInt(y))
       }
       state.raffle.balances = balances = zip(balancesRef.value[0])(balancesRef.value[1])
-    }
-
-    const gameSettingsRef = state.contracts.HashKeyRaffle.getGameSettings[state.raffle.gameSettingsKey]
-    let gameSettings = []
-    let price = null
-    if (gameSettingsRef) {
-      // const gameSettingsKeys = ['Price', 'Fee (%)', 'Starts', 'Ends', 'Complete', 'Draw Period (s)', 'Minimum Players']
-      const date = x => new Date(x*1000).toString()
-      const values = gameSettingsRef.value
-      const ticketsOwned = balances[account]?balances[account]:0
-      price = values[0]
-      state.raffle.gameSettings = gameSettings = [
+      ticketsOwned = balances[account]?balances[account]:0
+      state.raffle.gameStatus = gameStatus = [
         { key: 'Account', value: account },
         { key: 'Total tickets bought', value: totalTicketsBought},
         { key: 'Tickets owned', value: ticketsOwned},
-        { key: 'Current Game', value: currentGameIndex },
-        { key: 'Price (wei)', value: price },
-        { key: 'Fee (%)', value: values[1] },
-        { key: 'Starts', value: date(values[2]) },
-        { key: 'Ends', value: date(values[3]) },
-        { key: 'Minimum Players', value: values[6] },
+        { key: 'Number of players', value: numberOfPlayers},
       ]
-    }    
+    }
 
     let ticketsPurchased = null
     // const ticketsPurchasedRef = state.contracts.HashKeyRaffle.play[state.raffle.ticketsPurchasedKey]
@@ -117,9 +129,10 @@ const styles = theme => ({
       formErrors,
       formValid,
       price,
-      ticketsPurchased,
+      ticketsOwned,
       currentGameIndex,
       gameSettings,
+      gameStatus,
       account,
     }
   },
@@ -146,8 +159,9 @@ class Raffle extends React.Component {
   }
 
   handleSliderChange = (event, numTickets) => {
+    // console.log(numTickets)
+    // console.log(event)
     this.setState({ numTickets })
-    this.handleInput({ event: { target: { value: numTickets } } })
   }
 
   constructor (props, context) {
@@ -168,10 +182,14 @@ class Raffle extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { raffle, currentGameIndex } = this.props
+    const { raffle, currentGameIndex, ticketsOwned } = this.props
     if (currentGameIndex !== prevProps.currentGameIndex) {
       raffle.loadGameSettings(this.drizzle, currentGameIndex)
       raffle.loadBalances(this.drizzle, currentGameIndex)
+    }
+    
+    if (ticketsOwned !== prevProps.ticketsOwned) {
+      this.setState({numTickets: 1})
     }
   }
 
@@ -182,10 +200,10 @@ class Raffle extends React.Component {
       formErrors,
       formValid,
       price,
-      ticketsPurchased,
       raffle,
       currentGameIndex,
       gameSettings,
+      gameStatus,
       account,
     } = this.props
     
@@ -201,6 +219,19 @@ class Raffle extends React.Component {
               <Typography variant="body2">
                 Buy Ethereum Raffle Tickets
               </Typography>
+              <Divider className={ classes.marginDivider } />
+              <Table className={classes.table}>
+                <TableBody>
+                  {gameStatus.map((item, index) => {
+                    return (
+                      <TableRow key={index}>
+                        <TableCell>{item.key}</TableCell>
+                        <TableCell numeric>{item.value}</TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
               <FormControl component="fieldset" className={ classes.formControl }>
                 <Slider
                   name="numTickets"
@@ -210,6 +241,28 @@ class Raffle extends React.Component {
                   max={ 100 }
                   step={ 1 }
                 />
+                {/* <Field
+                  name="value"
+                  label="Value"
+                  component={ Input }
+                  validate={ validators.required }
+                />
+                <Field
+                  name="numTickets"
+                  label="Value"
+                  // onChange={this.handleSliderChange}
+                  component={ StepSlider }
+                  min={ 1 }
+                  max={ 100 }
+                  step={ 1 }
+                  // validate={ validators.required }
+                />
+                <Field
+                  name="value2"
+                  label="Value"
+                  component={ TextField }
+                  validate={ validators.required }
+                /> */}
                 <Button 
                   variant="raised" 
                   color="primary" 
