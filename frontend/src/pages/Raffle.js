@@ -12,14 +12,15 @@ import Link from 'redux-first-router-link'
 import Button from '@material-ui/core/Button'
 import Divider from '@material-ui/core/Divider'
 import FormControl from '@material-ui/core/FormControl'
+
 import Table from '@material-ui/core/Table'
 import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell'
 import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
-import Slider from '@material-ui/lab/Slider';
-
 import validators from '../utils/validators'
+
+import Slider from '@material-ui/lab/Slider';
 import TextField from '../components/TextField'
 
 import raffleModule from '../store/raffle'
@@ -51,7 +52,7 @@ const styles = theme => ({
 @reduxForm({
   form: 'raffle',
   initialValues: {
-    numTickets: null,
+    numTickets: 1,
   }
 })
 @connectStore({
@@ -76,7 +77,9 @@ const styles = theme => ({
     let totalTicketsBought = 0
     if (balancesRef) {
       const zip = xs => ys => xs.reduce( (obj, x, i) => ({ ...obj, [x]: ys[i] }), {})
-      totalTicketsBought = balancesRef.value[1].reduce( (obj, y) => obj + y)
+      if (balancesRef.value[1].length > 0) {
+        totalTicketsBought = balancesRef.value[1].reduce( (obj, y) => obj + y)
+      }
       state.raffle.balances = balances = zip(balancesRef.value[0])(balancesRef.value[1])
     }
 
@@ -87,10 +90,12 @@ const styles = theme => ({
       // const gameSettingsKeys = ['Price', 'Fee (%)', 'Starts', 'Ends', 'Complete', 'Draw Period (s)', 'Minimum Players']
       const date = x => new Date(x*1000).toString()
       const values = gameSettingsRef.value
+      const ticketsOwned = balances[account]?balances[account]:0
       price = values[0]
       state.raffle.gameSettings = gameSettings = [
+        { key: 'Account', value: account },
         { key: 'Total tickets bought', value: totalTicketsBought},
-        { key: 'Tickets owned', value: balances[account]},
+        { key: 'Tickets owned', value: ticketsOwned},
         { key: 'Current Game', value: currentGameIndex },
         { key: 'Price (wei)', value: price },
         { key: 'Fee (%)', value: values[1] },
@@ -142,6 +147,7 @@ class Raffle extends React.Component {
 
   handleSliderChange = (event, numTickets) => {
     this.setState({ numTickets })
+    this.handleInput({ event: { target: { value: numTickets } } })
   }
 
   constructor (props, context) {
@@ -191,15 +197,19 @@ class Raffle extends React.Component {
       <div className={classes.root}>
         <Grid container spacing={24}>
           <Grid item xs={12} sm={6}>
-            <Paper className={classes.paper}>
+            <Paper className={ classes.paper }>
               <Typography variant="body2">
-                Set Key / Value
-              </Typography>
-              <Typography variant="body2">
-                <b>Account: </b> { account }
+                Buy Ethereum Raffle Tickets
               </Typography>
               <FormControl component="fieldset" className={ classes.formControl }>
-                <Slider value={numTickets} min={1} max={100} step={1} onChange={this.handleSliderChange}/>
+                <Slider
+                  name="numTickets"
+                  onChange={this.handleSliderChange}
+                  value={ numTickets }
+                  min={ 1 }
+                  max={ 100 }
+                  step={ 1 }
+                />
                 <Button 
                   variant="raised" 
                   color="primary" 
@@ -208,7 +218,7 @@ class Raffle extends React.Component {
                   onClick={ () => {
                     raffle.buyTickets(this.drizzle, account, totalPrice)
                   } }>
-                  Buy {numTickets} tickets for {totalPrice} wei
+                  Buy { numTickets } tickets for { totalPrice } wei
                 </Button>
               </FormControl>
             </Paper>
