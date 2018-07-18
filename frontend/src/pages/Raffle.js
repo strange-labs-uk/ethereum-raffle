@@ -25,6 +25,7 @@ import validators from '../utils/validators'
 import Slider from '@material-ui/lab/Slider'
 import TextField from '../components/TextField'
 import StepSlider from '../components/StepSlider'
+import Countdown from '../components/Countdown'
 
 import raffleModule from '../store/raffle'
 
@@ -63,9 +64,6 @@ const styles = theme => ({
 })
 @connect(
   (state, ownProps) => {
-
-    console.log(state)
-    console.log(ownProps)
     const formValues = state.form.raffle.values
     const formErrors = getFormSyncErrors('raffle')(state)
     const formValid = isValid('raffle')(state)
@@ -83,15 +81,19 @@ const styles = theme => ({
     let gameStatus = []
     let price = null
     let ticketsOwned = 0
+    let gameStarts = new Date()
+    let gameEnds = new Date()
     if (gameSettingsRef) {
       // const gameSettingsKeys = ['Price', 'Fee (%)', 'Starts', 'Ends', 'Complete', 'Draw Period (s)', 'Minimum Players']
-      const date = x => new Date(x*1000).toString()
+      const date = x => new Date(x*1000)
       const values = gameSettingsRef.value
       price = values[0]
+      gameStarts = date(values[2])
+      gameEnds = date(values[3])
+      
       state.raffle.gameSettings = gameSettings = [
-        { key: 'Starts', value: date(values[2]) },
-        { key: 'Ends', value: date(values[3]) },
-        { key: 'Game number', value: currentGameIndex },
+        { key: 'Starts', value: gameStarts.toUTCString() },
+        { key: 'Ends', value: gameEnds.toUTCString() },
         { key: 'Cost (WEI)/ticket', value: price },
         { key: 'Fee (%)', value: values[1] },
         { key: 'Minimum players', value: values[6] },
@@ -114,6 +116,7 @@ const styles = theme => ({
         { key: 'Total tickets bought', value: totalTicketsBought},
         { key: 'Tickets owned', value: ticketsOwned},
         { key: 'Number of players', value: numberOfPlayers},
+        { key: 'Game number', value: currentGameIndex },
       ]
     }
 
@@ -133,6 +136,8 @@ const styles = theme => ({
       currentGameIndex,
       gameSettings,
       gameStatus,
+      gameStarts,
+      gameEnds,
       account,
     }
   },
@@ -204,6 +209,8 @@ class Raffle extends React.Component {
       currentGameIndex,
       gameSettings,
       gameStatus,
+      gameStarts,
+      gameEnds,
       account,
     } = this.props
     
@@ -217,21 +224,18 @@ class Raffle extends React.Component {
           <Grid item xs={12} sm={6}>
             <Paper className={ classes.paper }>
               <Typography variant="body2">
-                Buy Ethereum Raffle Tickets
+                {new Date()<gameStarts?'Game starts in':(new Date()<gameEnds?'Game ends in':'Game has ended.') }
               </Typography>
               <Divider className={ classes.marginDivider } />
-              <Table className={classes.table}>
-                <TableBody>
-                  {gameStatus.map((item, index) => {
-                    return (
-                      <TableRow key={index}>
-                        <TableCell>{item.key}</TableCell>
-                        <TableCell numeric>{item.value}</TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
+              <Countdown date={ gameEnds } />
+            </Paper>
+          </Grid> 
+          <Grid item xs={12} sm={6}>
+            <Paper className={ classes.paper }>
+              <Typography variant="body2">
+                Buy ethereum raffle tickets
+              </Typography>
+              <Divider className={ classes.marginDivider } />
               <FormControl component="fieldset" className={ classes.formControl }>
                 <Slider
                   name="numTickets"
@@ -277,14 +281,14 @@ class Raffle extends React.Component {
             </Paper>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <Paper className={classes.paper}>
+            <Paper className={ classes.paper }>
               <Typography variant="body2">
-                Current Game Settings
+                Game status
               </Typography>
               <Divider className={ classes.marginDivider } />
               <Table className={classes.table}>
                 <TableBody>
-                  {gameSettings.map((item, index) => {
+                  {gameStatus.map((item, index) => {
                     return (
                       <TableRow key={index}>
                         <TableCell>{item.key}</TableCell>
@@ -292,6 +296,26 @@ class Raffle extends React.Component {
                       </TableRow>
                     )
                   })}
+                </TableBody>
+              </Table>
+            </Paper>
+          </Grid>          
+          <Grid item xs={12} sm={6}>
+            <Paper className={classes.paper}>
+              <Typography variant="body2">
+                Current game settings
+              </Typography>
+              <Divider className={ classes.marginDivider } />
+              <Table className={classes.table}>
+                <TableBody>
+                  { gameSettings.map((item, index) => {
+                    return (
+                      <TableRow key={index}>
+                        <TableCell>{item.key}</TableCell>
+                        <TableCell numeric>{item.value}</TableCell>
+                      </TableRow>
+                    )
+                  }) }
                 </TableBody>
               </Table>
             </Paper>

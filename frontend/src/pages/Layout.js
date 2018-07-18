@@ -15,6 +15,7 @@ const styles = theme => ({
   root: {
     height: '100%',
     backgroundImage: `url(${backgroundImage})`,
+    backgroundAttachment: 'fixed',
     backgroundRepeat: 'no-repeat',
     backgroundSize: 'cover',
     height: '100%'
