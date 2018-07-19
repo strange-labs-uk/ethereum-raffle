@@ -218,22 +218,35 @@ class Raffle extends React.Component {
 
     const totalPrice = numTickets*price
 
+    const now = new Date()
+    let countdownTitle = "No game scheduled."
+    let countdownTo = now
+    if (now < gameStarts) {
+      countdownTitle = "A new game will start in"
+      countdownTo = gameStarts
+    } else {
+      if (now < gameEnds) {
+        countdownTitle = "This game will end in"
+        countdownTo = gameEnds
+      }
+    }
+
     return (
       <div className={classes.root}>
         <Grid container spacing={24}>
           <Grid item xs={12} sm={6}>
             <Paper className={ classes.paper }>
               <Typography variant="body2">
-                {new Date()<gameStarts?'Game starts in':(new Date()<gameEnds?'Game ends in':'Game has ended.') }
+                {countdownTitle}
               </Typography>
               <Divider className={ classes.marginDivider } />
-              <Countdown date={ gameEnds } />
+              <Countdown date={countdownTo} />
             </Paper>
           </Grid> 
           <Grid item xs={12} sm={6}>
             <Paper className={ classes.paper }>
               <Typography variant="body2">
-                Buy ethereum raffle tickets
+                Buy raffle tickets for this game
               </Typography>
               <Divider className={ classes.marginDivider } />
               <FormControl component="fieldset" className={ classes.formControl }>
